@@ -36,9 +36,6 @@ void photon_prod() {
 	double tau;
 	int line=1; //Spacetime position inferred from line number
 	struct phaseSpace_pos curr_pos;
-	//vector<double> discSpectra;
-	//double discSpectra[neta][nphi][nkt][nSpec];
-	//double discSpectra[nkt][neta][nphi];
 	//The second to last dimension is meant for including an upper and a lower bound on the uncertainty, if possible
 	//discSpectra[][][][0][] is for the lower bound
 	//discSpectra[][][][1][] is for the value bound
@@ -109,8 +106,6 @@ void openFileRead(bool binary, std::string filename, void ** pointer) {
 }
 
 //Read spacetime file 
-//bool spacetimeRead(bool binary, void * file, float * T, float * qgp, float * ux, float * uy, float * uz) {
-//bool spacetimeRead(bool binary, void * file, float * T_and_boosts) {
 bool spacetimeRead(bool binary, void * file, float T_and_boosts[]) {
 
 	int elemRead;
@@ -118,11 +113,6 @@ bool spacetimeRead(bool binary, void * file, float T_and_boosts[]) {
 	//If binary
 	if (binary) {
 		elemRead=std::fread(&T_and_boosts,5*sizeof(float),5,(std::FILE *) file);
-		//elemRead=std::fread(T,sizeof(float),1,(std::FILE *) file);
-		//elemRead+=std::fread(qgp,sizeof(float),1,(std::FILE *) file);
-		//elemRead+=std::fread(ux,sizeof(float),1,(std::FILE *) file);
-		//elemRead+=std::fread(uy,sizeof(float),1,(std::FILE *) file);
-		//elemRead+=std::fread(uz,sizeof(float),1,(std::FILE *) file);
 	}
 	else {
 		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f", &T_and_boosts[0], &T_and_boosts[1], &T_and_boosts[2], &T_and_boosts[3], &T_and_boosts[4]);
@@ -146,11 +136,6 @@ bool shearRead(bool binary, void * file, float shear_info[]) {
 	//If binary
 	if (binary) {
 		elemRead=std::fread(&shear_info,10*sizeof(float),10,(std::FILE *) file);
-		//elemRead=std::fread(T,sizeof(float),1,(std::FILE *) file);
-		//elemRead+=std::fread(qgp,sizeof(float),1,(std::FILE *) file);
-		//elemRead+=std::fread(ux,sizeof(float),1,(std::FILE *) file);
-		//elemRead+=std::fread(uy,sizeof(float),1,(std::FILE *) file);
-		//elemRead+=std::fread(uz,sizeof(float),1,(std::FILE *) file);
 	}
 	else {
 		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f %f %f %f %f %f", &shear_info[0], &shear_info[1], &shear_info[2], &shear_info[3], &shear_info[4], &shear_info[5], &shear_info[6], &shear_info[7], &shear_info[8], &shear_info[9]);
