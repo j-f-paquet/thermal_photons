@@ -12,6 +12,11 @@ int main() {
 	//Compute photon production
 	photon_prod();
 
+	std::cout << "Number of rates=" << rateList.size() << "\n";
+	for(int i=0; i<rateList.size();i++) {
+		std::cout << "rate " << i << ":" << rateList[i] << "\n";
+	}
+
 
 }
 
@@ -33,6 +38,12 @@ void photon_prod() {
 	struct phaseSpace_pos curr_pos;
 	//vector<double> discSpectra;
 	//double discSpectra[neta][nphi][nkt][nSpec];
+	//double discSpectra[nkt][neta][nphi];
+	//The second to last dimension is meant for including an upper and a lower bound on the uncertainty, if possible
+	//discSpectra[][][][0][] is for the lower bound
+	//discSpectra[][][][1][] is for the value bound
+	//discSpectra[][][][2][] is for the upper bound
+	double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][rateList.size()];
 
 	//rate(kOverT)=rate_ideal(koverT)+\hat{k}_\alpha \hat{k}_\beta \Pi^{\alpha \beta}*factor_born_viscous(kOverT)
 	//Frame of \Pi^{\alpha \beta}:
@@ -127,6 +138,35 @@ bool spacetimeRead(bool binary, void * file, float T_and_boosts[]) {
 
 }
 
+//Read shear file 
+bool shearRead(bool binary, void * file, float shear_info[]) {
+
+	int elemRead;
+
+	//If binary
+	if (binary) {
+		elemRead=std::fread(&shear_info,10*sizeof(float),10,(std::FILE *) file);
+		//elemRead=std::fread(T,sizeof(float),1,(std::FILE *) file);
+		//elemRead+=std::fread(qgp,sizeof(float),1,(std::FILE *) file);
+		//elemRead+=std::fread(ux,sizeof(float),1,(std::FILE *) file);
+		//elemRead+=std::fread(uy,sizeof(float),1,(std::FILE *) file);
+		//elemRead+=std::fread(uz,sizeof(float),1,(std::FILE *) file);
+	}
+	else {
+		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f %f %f %f %f %f", &shear_info[0], &shear_info[1], &shear_info[2], &shear_info[3], &shear_info[4], &shear_info[5], &shear_info[6], &shear_info[7], &shear_info[8], &shear_info[9]);
+	}
+
+	//If fscanf couldn't read the five elements, it's the end of the file or there's a problem
+	if (elemRead != 10) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+
+}
+
+
 /***** Computation of the discretized spectrum *****/
 void computeDescretizedSpectrum(bool viscosity, int * grid_pos, void * grid_info, float T_and_boosts[], float shear_info[], double * discSpectra) {
 
@@ -134,7 +174,7 @@ void computeDescretizedSpectrum(bool viscosity, int * grid_pos, void * grid_info
 	double T, qgpFrac, betax, betay, betaz, gamma;
 	double eta, phi, kt;
 	double kL, kLx, kLy, kLz;
-	double kR, kkPiOverEta;
+	double kR, kHatkHatPiOver_e_P;
 	double delEta, delPhi, delPt;
 	double coshEta, sinhEta, cosPhi, sinPhi, invCoshEta;
 	double stPosition[4];
@@ -157,45 +197,46 @@ void computeDescretizedSpectrum(bool viscosity, int * grid_pos, void * grid_info
 	//Compute (tau,x,y,eta) from line number
 	//Check if
 
-
 	//Loop over transverse momentum kT, azimuthal angle phi and rapidity eta
 	//(note that there is no different here between the rapidity and the pseudorapidity, the photon being massless)
-	//Loop over rapidity eta
-	for(int ieta=0;ieta<CONST_Neta; ieta++) {
+	//Loop over kT
+	for(int ikt=0;ikt<CONST_Nkt; ikt++) {
 
-		eta=CONST_etaMin+ieta*delEta;	
+		kt=CONST_ktMin+ikt*delPt;	
 
-		coshEta=cosh(eta);
-		sinhEta=sinh(eta);
-		invCoshEta=1.0/coshEta;
+		//Loop over rapidity eta
+		for(int ieta=0;ieta<CONST_Neta; ieta++) {
 
-		//Loop over phi (uniform discretization - to be used with the trapezoidal method)
-		for(int iphi=0;iphi<CONST_Nphi; iphi++) {
+			eta=CONST_etaMin+ieta*delEta;	
 
-			phi=iphi*delPhi;	
+			coshEta=cosh(eta);
+			sinhEta=sinh(eta);
+			invCoshEta=1.0/coshEta;
 
-			cosPhi=cos(phi);
-			sinPhi=sin(phi);
+			//Loop over phi (uniform discretization - to be used with the trapezoidal method)
+			for(int iphi=0;iphi<CONST_Nphi; iphi++) {
 
-			//Evaluate (A_L)_{alpha beta} \hat{k}_L^alpha \alpha{k}_L^beta
-			if (viscosity) {
-				//shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
-				//*shear_info+: 0   1   2   3   4   5   6   7   8   9
-				//\hat{K}=(1,cos(phi)/cosh(eta),sin(phi)/cosh(eta),sinh(eta)/cosh(eta))
-				//kkPiOverEta=A00 + 1/cosh(eta)*( 2*(A01*k1+A02*k2+A03*k3) + 1/cosheta*() )
-				//kkPiOverEta=A00 + 1/cosh(eta)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(eta)^2)+2/cosh(eta)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(eta)+1/cosh(eta)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(eta)+A23*sin(phi)*sinh(eta)))
-				//kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
-				kkPiOverEta=shear_info[0] + invCoshEta*invCoshEta*( shear_info[4]*cosPhi*cosPhi + shear_info[7]*sinPhi*sinPhi + shear_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( shear_info[1]*cosPhi + shear_info[2]*sinPhi + shear_info[3]*sinhEta + invCoshEta*( shear_info[5]*cosPhi*sinPhi + shear_info[6]*cosPhi*sinhEta + shear_info[8]*sinPhi*sinhEta));
-				
-				//Akk=(*shear_info)+invCoshEta( (*shear_info+4)*cosPhi*cosPhi);
-			}
+				phi=iphi*delPhi;	
+
+				cosPhi=cos(phi);
+				sinPhi=sin(phi);
+
+				//Evaluate (A_L)_{alpha beta} \hat{k}_L^alpha \alpha{k}_L^beta
+				if (viscosity) {
+					//shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
+					//*shear_info+: 0   1   2   3   4   5   6   7   8   9
+					//\hat{K}=(1,cos(phi)/cosh(eta),sin(phi)/cosh(eta),sinh(eta)/cosh(eta))
+					//kkPiOverEta=A00 + 1/cosh(eta)*( 2*(A01*k1+A02*k2+A03*k3) + 1/cosheta*() )
+					//kkPiOverEta=A00 + 1/cosh(eta)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(eta)^2)+2/cosh(eta)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(eta)+1/cosh(eta)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(eta)+A23*sin(phi)*sinh(eta)))
+					//kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
+					kHatkHatPiOver_e_P=shear_info[0] + invCoshEta*invCoshEta*( shear_info[4]*cosPhi*cosPhi + shear_info[7]*sinPhi*sinPhi + shear_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( shear_info[1]*cosPhi + shear_info[2]*sinPhi + shear_info[3]*sinhEta + invCoshEta*( shear_info[5]*cosPhi*sinPhi + shear_info[6]*cosPhi*sinhEta + shear_info[8]*sinPhi*sinhEta));
+					
+					//Akk=(*shear_info)+invCoshEta( (*shear_info+4)*cosPhi*cosPhi);
+				}
+				else {
+					kHatkHatPiOver_e_P=0.0;
+				}
 			
-
-			//Loop over kT
-			for(int ikt=0;ikt<CONST_Nkt; ikt++) {
-
-				kt=CONST_ktMin+ikt*delPt;	
-
 				//Photon momentum in the lab frame
 				//k=mT cosh(eta)=kT cosh(eta)
 				kL=kt*coshEta;
@@ -218,7 +259,6 @@ void computeDescretizedSpectrum(bool viscosity, int * grid_pos, void * grid_info
 				stPosition[3]=ikt;*/
 				//fill_grid(&stPostion, kR,Akk,discSpectra);	
 
-				//
 
 			}
 		}	
@@ -251,6 +291,7 @@ void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
 		//Update tau	
 		curr_pos->tau+=deltaTau;
 
+		/*
 		printf("New tau=%d at line %i\n",curr_pos->tau,line);
 
 		//Check if there's a change in iTauList
@@ -261,7 +302,7 @@ void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
 		else {
 			curr_pos->newiTau=0;
 		}
-		
+		*/
 	}
 
 }

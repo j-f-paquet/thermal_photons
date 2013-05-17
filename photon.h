@@ -1,3 +1,6 @@
+#ifndef PHOTON_H
+#define PHOTON_H
+
 /*******************************
 ********** How to use **********
 1) 
@@ -18,6 +21,7 @@
 #include <cmath>
 #include <cstdio>
 #include <vector>
+#include <iostream>
 
 /********* Inputs ********/
 //Format of the input files
@@ -57,6 +61,15 @@ const double CONST_etaMax=1.0; //Maximum value for eta
 const int CONST_Neta=3;  //Warning: delta eta=(etaMax-etamin)/(Nkt-1)
 
 //Observables
+//const std::vector<std::string> CONST_rateList = {"ideal","viscous","viscousDusling"};
+//const int miaw[] = {1,2,3,4};
+//const char char_rateList[4][100] = {"01", "02", "03", "04"};
+//std::vector<std::string> v(char_rateList, char_rateList + 4);
+//const char* char_rateList[] = {"ideal_AMY", "ideal_LL", "viscous_Dusling", "viscous_LL"};
+const char char_rateList[][100] = {"ideal_AMY", "ideal_LL", "viscous_Dusling", "viscous_LL", "ideal_LL", "viscous_Dusling", "viscous_LL"};
+const std::vector<std::string> rateList(char_rateList, char_rateList + int(sizeof(char_rateList)/sizeof(char)/100.));
+//const std::vector<std::string> rateList;
+//rateList.push_back("ideal_AMY");
 
 //Generate spectra sums from t0 to t_i with t_i \in CONST_tauList
 const double CONST_tauList[]={.6,1.0,2.0};
@@ -88,3 +101,5 @@ struct phaseSpace_pos {
 	bool newiTau;
 
 };
+
+#endif
