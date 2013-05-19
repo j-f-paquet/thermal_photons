@@ -25,9 +25,9 @@
 
 /********* Inputs ********/
 //Format of the input files
-const bool binaryMode=1; //0 for binary, 1 for text
+const bool CONST_binaryMode=0; //0 for text, 1 for binary
 //Location of the spacetime grid file
-const std::string stGridFile="stgrid.dat";
+const std::string stGridFile="./evolution_xyeta.dat";
 
 //Information about the spacetime grid
 //Number of cells of the grid
@@ -46,7 +46,7 @@ const double deltaTau=0.001;
 const bool CONST_viscosity=0; //0 for thermal, 1 for anisotropic
 const double shear_to_s=0.08;
 //Location of the viscous files
-const std::string viscosityFile="miaw";
+const std::string viscosityFile="evolution_Wmunu_over_shear_xyeta.dat";
 
 //Discretization of photon spectrum
 //kT

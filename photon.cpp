@@ -53,23 +53,22 @@ void photon_prod() {
 	curr_pos.newiTau=0;
 
 	//Open spacetime grid file
-	openFileRead(binaryMode, stGridFile, (void **) &stFile);
+	openFileRead(CONST_binaryMode, stGridFile, (void **) &stFile);
 
 
 	//Read the first line of the spacetime grid
 	//readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
-	readRes=spacetimeRead(binaryMode, stFile, &T_and_boosts[0]);
+	readRes=spacetimeRead(CONST_binaryMode, stFile, &T_and_boosts[0]);
 	//Loop over the rest of the file
 	while (readRes) {
 		//Compute (tau,x,y,eta) from line number
 		infer_position_info(line,&curr_pos);
 
 		//Do stuff
-		//computeDescretizedSpectrum();
-		printf("Temp=%f\n",T_and_boosts[0]);
+		//printf("Temp=%f\n",T_and_boosts[0]);
 
 		//Try to read the next line
-		readRes=spacetimeRead(binaryMode, stFile, T_and_boosts);
+		readRes=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
 		line+=1;
 	//	readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
 		computeDescretizedSpectrum(CONST_viscosity, &curr_pos, T_and_boosts, 0, discSpectra);
@@ -248,6 +247,9 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 				stPosition[1]=ieta;
 				stPosition[2]=iphi;
 				stPosition[3]=ikt;*/
+				curr_pos->ikt=ikt;
+				curr_pos->iphi=iphi;
+				curr_pos->ieta=ieta;
 				fill_grid(curr_pos, kR, T, kHatkHatPiOver_e_P,discSpectra);	
 
 
