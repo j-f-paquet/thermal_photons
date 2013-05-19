@@ -43,7 +43,7 @@ const double CONST_tau0=0.4;
 const double deltaTau=0.001;
 
 //Run with viscosity or not
-const bool viscosity=0; //0 for thermal, 1 for anisotropic
+const bool CONST_viscosity=0; //0 for thermal, 1 for anisotropic
 const double shear_to_s=0.08;
 //Location of the viscous files
 const std::string viscosityFile="miaw";
@@ -65,8 +65,10 @@ const int CONST_Neta=3;  //Warning: delta eta=(etaMax-etamin)/(Nkt-1)
 //const int miaw[] = {1,2,3,4};
 //const char char_rateList[4][100] = {"01", "02", "03", "04"};
 //std::vector<std::string> v(char_rateList, char_rateList + 4);
-const char char_rateList[][100] = {"ideal_AMY", "ideal_LL", "viscous_Dusling", "viscous_LL", "ideal_LL", "viscous_Dusling", "viscous_LL"};
-const std::vector<std::string> rateList(char_rateList, char_rateList + int(sizeof(char_rateList)/sizeof(char)/100.));
+const char char_rateList[][100] = {"rate_qgp_ideal_Born"};
+//, "ideal_LL", "viscous_Dusling", "viscous_LL", "ideal_LL", "viscous_Dusling", "viscous_LL"};
+const int CONST_N_rates=int(sizeof(char_rateList)/sizeof(char)/100.);
+const std::vector<std::string> CONST_rateList(char_rateList, char_rateList + CONST_N_rates);
 
 //Generate spectra sums from t0 to t_i with t_i \in CONST_tauList
 const double CONST_tauList[]={.6,1.0,2.0};

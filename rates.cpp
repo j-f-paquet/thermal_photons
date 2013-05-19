@@ -37,7 +37,7 @@ double prefA(double kOverT, double T) {
 }
 
 //QGP ideal rate
-double rate_qgp_born_ideal_val(double kOverT, double T) {
+double rate_qgp_ideal_born(double kOverT, double T, double kkPiOver_e_P_k2) {
 
 	//Forward declaration
 	double C_hard(double kOverT);

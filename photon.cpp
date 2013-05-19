@@ -12,9 +12,9 @@ int main() {
 	//Compute photon production
 	photon_prod();
 
-	std::cout << "Number of rates=" << rateList.size() << "\n";
-	for(int i=0; i<rateList.size();i++) {
-		std::cout << "rate " << i << ":" << rateList[i] << "\n";
+	std::cout << "Number of rates=" << CONST_rateList.size() << "\n";
+	for(int i=0; i<CONST_rateList.size();i++) {
+		std::cout << "rate " << i << ":" << CONST_rateList[i] << "\n";
 	}
 
 
@@ -28,6 +28,7 @@ void photon_prod() {
 	void openFileRead(bool binary, std::string filename, void ** pointer);
 	bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
 	void infer_position_info(int line, struct phaseSpace_pos *curr_pos);
+	void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float shear_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	//Variables
 	float T_and_boosts[5], shear_info[10];
@@ -40,7 +41,7 @@ void photon_prod() {
 	//discSpectra[][][][0][] is for the lower bound
 	//discSpectra[][][][1][] is for the value bound
 	//discSpectra[][][][2][] is for the upper bound
-	double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][rateList.size()];
+	double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates] = {0.0};
 
 	//rate(kOverT)=rate_ideal(koverT)+\hat{k}_\alpha \hat{k}_\beta \Pi^{\alpha \beta}*factor_born_viscous(kOverT)
 	//Frame of \Pi^{\alpha \beta}:
@@ -54,12 +55,12 @@ void photon_prod() {
 	//Open spacetime grid file
 	openFileRead(binaryMode, stGridFile, (void **) &stFile);
 
+
 	//Read the first line of the spacetime grid
 	//readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
 	readRes=spacetimeRead(binaryMode, stFile, &T_and_boosts[0]);
 	//Loop over the rest of the file
 	while (readRes) {
-
 		//Compute (tau,x,y,eta) from line number
 		infer_position_info(line,&curr_pos);
 
@@ -71,6 +72,7 @@ void photon_prod() {
 		readRes=spacetimeRead(binaryMode, stFile, T_and_boosts);
 		line+=1;
 	//	readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
+		computeDescretizedSpectrum(CONST_viscosity, &curr_pos, T_and_boosts, 0, discSpectra);
 
 	}
 
@@ -153,7 +155,11 @@ bool shearRead(bool binary, void * file, float shear_info[]) {
 
 
 /***** Computation of the discretized spectrum *****/
-void computeDescretizedSpectrum(bool viscosity, int * grid_pos, void * grid_info, float T_and_boosts[], float shear_info[], double * discSpectra) {
+void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float shear_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+	
+	//Forward declaration
+	//void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double Akk, double * discSpectra);
+	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	//Local variables
 	double T, qgpFrac, betax, betay, betaz, gamma;
@@ -242,7 +248,7 @@ void computeDescretizedSpectrum(bool viscosity, int * grid_pos, void * grid_info
 				stPosition[1]=ieta;
 				stPosition[2]=iphi;
 				stPosition[3]=ikt;*/
-				//fill_grid(&stPostion, kR,Akk,discSpectra);	
+				fill_grid(curr_pos, kR, T, kHatkHatPiOver_e_P,discSpectra);	
 
 
 			}
@@ -254,7 +260,38 @@ void computeDescretizedSpectrum(bool viscosity, int * grid_pos, void * grid_info
 //Discretized spectra: array[times][Neta][Nphi][Npt][rates]
 //Discretized spectra, version 2: array[times][Neta][Nphi][Npt][rates][value_and_remainder]
 //stPos=[tau, ieta, iphi, ikt]
-void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double Akk, double * discSpectra) {
+void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHatkHatPiOver_e_P, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+
+	//
+	double rate_qgp_ideal_born(double, double, double);
+
+	//
+	int ieta=curr_pos->ieta;
+	int iphi=curr_pos->iphi;
+	int ikt=curr_pos->ikt;
+	double tmpRate;
+
+	//Loop over rates
+	for(int iRate=0; iRate<CONST_rateList.size();iRate++) {
+	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_rateList.size()];
+
+		//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
+		double (*local_rate)(double, double, double) = rate_qgp_ideal_born;
+
+
+		//tmpRate=CONST_rateList[iRate].c_str()(0.0,0.0,0.0);
+		tmpRate=(*local_rate)(kR,T,kHatkHatPiOver_e_P);
+		
+		//Fill value
+		discSpectra[ieta][iphi][ikt][1][iRate]+=tmpRate;
+
+		//Fill lower bound uncertainty
+		discSpectra[ieta][iphi][ikt][0][iRate]=0.0;
+
+		//Fill upper bound uncertainty
+		discSpectra[ieta][iphi][ikt][2][iRate]=0.0;
+
+	}
 
 	//Compute rates
 	//rate_dusling(double kR, double T, double kkPiOverEta double * res, double * remainder);
