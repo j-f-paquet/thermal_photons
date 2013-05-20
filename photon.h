@@ -22,12 +22,14 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 
 /********* Inputs ********/
 //Format of the input files
 const bool CONST_binaryMode=0; //0 for text, 1 for binary
 //Location of the spacetime grid file
-const std::string stGridFile="./evolution_xyeta.dat";
+const std::string stGridFile="./evolution_small.dat";
 
 //Information about the spacetime grid
 //Number of cells of the grid
@@ -60,6 +62,11 @@ const double CONST_etaMin=-1.0; //Minimum value for eta
 const double CONST_etaMax=1.0; //Maximum value for eta
 const int CONST_Neta=3;  //Warning: delta eta=(etaMax-etamin)/(Nkt-1)
 
+//Deltas used for the (uniform) discretization of the grid
+const double CONST_delEta=(CONST_etaMax-CONST_etaMin)/(CONST_Neta-1.0);
+const double CONST_delPhi=(2*M_PI)/(CONST_Nphi-1.0);
+const double CONST_delKt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
+
 //Observables
 //const std::vector<std::string> CONST_rateList = {"ideal","viscous","viscousDusling"};
 //const int miaw[] = {1,2,3,4};
@@ -69,6 +76,12 @@ const char char_rateList[][100] = {"rate_qgp_ideal_Born"};
 //, "ideal_LL", "viscous_Dusling", "viscous_LL", "ideal_LL", "viscous_Dusling", "viscous_LL"};
 const int CONST_N_rates=int(sizeof(char_rateList)/sizeof(char)/100.);
 const std::vector<std::string> CONST_rateList(char_rateList, char_rateList + CONST_N_rates);
+
+//Mid-rapidity cut: the midrapidity result will be an average over approximatively -midRapCut to midRapCut
+const double CONST_midRapCut = 0.5;
+//Number of Fourier coefficient to compute
+const int CONST_FourierNb = 3;
+	
 
 //Generate spectra sums from t0 to t_i with t_i \in CONST_tauList
 const double CONST_tauList[]={.6,1.0,2.0};

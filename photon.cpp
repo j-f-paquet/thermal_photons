@@ -165,7 +165,6 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 	double eta, phi, kt;
 	double kL, kLx, kLy, kLz;
 	double kR, kHatkHatPiOver_e_P;
-	double delEta, delPhi, delPt;
 	double coshEta, sinhEta, cosPhi, sinPhi, invCoshEta;
 	double stPosition[4];
 
@@ -179,11 +178,6 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 	//Pre-compute gamma for efficiency
 	gamma=1.0/sqrt(1+betax*betax+betay*betay+betaz*betaz);
 
-	//Deltas used for the (uniform) discretization of the grid
-	delEta=(CONST_etaMax-CONST_etaMin)/(CONST_Neta-1.0);
-	delPhi=(2*M_PI)/(CONST_Nphi-1.0);
-	delPt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
-
 	//Compute (tau,x,y,eta) from line number
 	//Check if
 
@@ -192,12 +186,12 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 	//Loop over kT
 	for(int ikt=0;ikt<CONST_Nkt; ikt++) {
 
-		kt=CONST_ktMin+ikt*delPt;	
+		kt=CONST_ktMin+ikt*CONST_delKt;	
 
 		//Loop over rapidity eta
 		for(int ieta=0;ieta<CONST_Neta; ieta++) {
 
-			eta=CONST_etaMin+ieta*delEta;	
+			eta=CONST_etaMin+ieta*CONST_delEta;	
 
 			coshEta=cosh(eta);
 			sinhEta=sinh(eta);
@@ -206,7 +200,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 			//Loop over phi (uniform discretization - to be used with the trapezoidal method)
 			for(int iphi=0;iphi<CONST_Nphi; iphi++) {
 
-				phi=iphi*delPhi;	
+				phi=iphi*CONST_delPhi;	
 
 				cosPhi=cos(phi);
 				sinPhi=sin(phi);
@@ -282,7 +276,8 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 
 		//tmpRate=CONST_rateList[iRate].c_str()(0.0,0.0,0.0);
-		tmpRate=(*local_rate)(kR,T,kHatkHatPiOver_e_P);
+		//tmpRate=(*local_rate)(kR,T,kHatkHatPiOver_e_P);
+		tmpRate=cos(2.0*iphi*CONST_delPhi);
 		
 		//Fill value
 		discSpectra[ieta][iphi][ikt][1][iRate]+=tmpRate;
@@ -330,3 +325,118 @@ void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
 	}
 
 }
+
+
+void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+
+	//
+	void compute_midrapidity_yield_and_vn(void * outfile, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3]);
+
+	//One file per rate
+	for(int i=0; i<CONST_N_rates; i++) {
+
+		//Set output file name
+		std::stringstream tmpStr;
+		tmpStr.str("vn_");
+		tmpStr << CONST_rateList[i];
+		tmpStr << ".dat";
+
+		//Open output file
+		std::ofstream outfile;
+		outfile.open(tmpStr.str().c_str());
+		//Set the format of the output
+		//outfile.width (10);
+		outfile.precision(10);
+		outfile.setf(std::ios::scientific);
+
+		//Output result
+		outfile << "#pt" << "\t" << "yield";
+		for(int j=1;i<=CONST_FourierNb; j++) {
+			outfile	<< "\tyield*vn[" << j << "]\tvn[" << j << "]";
+		}
+		outfile<< "\n";
+		
+		compute_midrapidity_yield_and_vn(&outfile, discSpectra[][][][][i]);
+
+		//Close file
+		outfile.close();
+
+	}
+
+}
+
+//Output the phi-integrated, rapidity-averaged-around-0 yield as a function of pT
+void compute_midrapidity_yield_and_vn(void * outfile, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3]) {
+
+	double kt, eta, phi, yFac;
+	double yield, vn[CONST_FourierNb];
+	int iEtamin=0, iEtamax;
+
+	//Identify the cells in rapidity that should be averaged over
+	for(int ieta=0;ieta<CONST_Neta; ieta++) {
+
+		eta=CONST_etaMin+ieta*CONST_delEta;	
+
+		if (fabs(eta) <= CONST_midRapCut) iEtamin++;
+		else if (fabs(eta) > CONST_midRapCut) {
+			iEtamax=ieta-1;
+			continue;
+		}
+	
+	}
+
+	for(int ikt=0;ikt<CONST_Nkt; ikt++) {
+
+		//Will contain the results of the phi integration and rapidity averaging
+		yield=0.0;
+		for(int i=1;i<=CONST_FourierNb; i++) {
+			vn[i]=0;
+		}
+
+		kt=CONST_ktMin+ikt*CONST_delKt;	
+
+		//Loop over rapidity eta
+		for(int ieta=iEtamin;ieta<=iEtamax; ieta++) {
+
+			eta=CONST_etaMin+ieta*CONST_delEta;	
+
+			//Loop over phi (trapezoidal method)
+			for(int iphi=0;iphi<CONST_Nphi-1; iphi++) {
+
+				phi=iphi*CONST_delPhi;	
+				
+				//Let's use a simple midpoint rule for now
+				yFac=CONST_delEta;
+		
+				//Finally, multiply by dNdydptdphi[NY][NPT][NPHI+1] 
+				//tmpIntRes+=phiFac*yFac*particleList[j].dNdydptdphi[iy][ipt][iphi];
+				yield+=discSpectra[ieta][iphi][ikt][1]*yFac;
+				for(int i=1;i<=CONST_FourierNb; i++) {
+					vn[i]+=yFac*discSpectra[ieta][iphi][ikt][1]*cos(i*phi);
+				}
+				
+			}
+			
+		}
+
+		//Multiply by delta_ph and divide by the rapidity integration range 
+		//(to yield an average instead of an integral)
+		yield/=CONST_delPhi/((iEtamax-iEtamin)*CONST_delEta);
+		for(int i=1;i<=CONST_FourierNb; i++) {
+			vn[i]/=CONST_delPhi/((iEtamax-iEtamin)*CONST_delEta);
+		}
+
+//			//Output result
+//			outfile << pt << "\t" << yield;
+//			for(int i=1;i<=FourierNb; i++) {
+//				outfile	<< "\t" << vn[i] << "\t" << vn[i]/yield;
+//			}
+//			outfile<< "\n";
+
+
+	}
+
+
+}
+
+
