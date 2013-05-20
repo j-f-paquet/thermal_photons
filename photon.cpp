@@ -49,22 +49,18 @@ void photon_prod() {
 
 	//Initialise spacetime position
 	curr_pos.tau=CONST_tau0;
-	//Skip any time in CONST_tauList that is smaller than CONST_tau0
-	for(curr_pos.iTauList=0;CONST_tauList[curr_pos.iTauList]<CONST_tau0;curr_pos.iTauList+=1);
-	curr_pos.newiTau=0;
+//	//Skip any time in CONST_tauList that is smaller than CONST_tau0
+//	for(curr_pos.iTauList=0;CONST_tauList[curr_pos.iTauList]<CONST_tau0;curr_pos.iTauList+=1);
+//	curr_pos.newiTau=0;
 
 	//Open spacetime grid file
 	openFileRead(CONST_binaryMode, stGridFile, (void **) &stFile);
-
 
 	//Read the first line of the spacetime grid
 	//readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
 	readRes=spacetimeRead(CONST_binaryMode, stFile, &T_and_boosts[0]);
 	//Loop over the rest of the file
 	while (readRes) {
-		//Compute (tau,x,y,eta) from line number
-		infer_position_info(line,&curr_pos);
-
 		//Do stuff
 		//printf("Temp=%f\n",T_and_boosts[0]);
 
@@ -74,11 +70,12 @@ void photon_prod() {
 	//	readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
 		if (T_and_boosts[0]>=CONST_freezeout_T) computeDescretizedSpectrum(CONST_viscosity, &curr_pos, T_and_boosts, 0, discSpectra);
 
+		//Compute (tau,x,y,eta) from line number
+		infer_position_info(line,&curr_pos);
 	}
 
 	//Close spacetime grid file
 	std::fclose(stFile);
-
 
 	//Compute observables from the discretized photon spectra
 	//compObservables();
@@ -276,9 +273,8 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 		//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
 		double (*local_rate)(double, double, double) = rate_qgp_ideal_born;
 
-
 		//tmpRate=CONST_rateList[iRate].c_str()(0.0,0.0,0.0);
-		tmpRate=(*local_rate)(kR,T,kHatkHatPiOver_e_P);
+		tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
 		//tmpRate=1.0+cos((ikt+1)*iphi*CONST_delPhi);
 
 		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau

@@ -47,7 +47,7 @@ double prefA(double kOverT, double T) {
 	//
 	double res;
 
-	res=2*CONST_alphaEM*CONST_Nc*qCharge2[CONST_Nf-1]*CONST_mInfOverT*CONST_mInfOverT*T*fermiDirac(kOverT)/kOverT;
+	res=2*CONST_alphaEM*CONST_Nc*qCharge2[CONST_Nf-1]*CONST_mInfOverT*CONST_mInfOverT*T*T*fermiDirac(kOverT)/kOverT;
 
 	return res;
 

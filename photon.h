@@ -29,8 +29,8 @@
 //Format of the input files
 const bool CONST_binaryMode=0; //0 for text, 1 for binary
 //Location of the spacetime grid file
-//const std::string stGridFile="./evolution_xyeta.dat";
-const std::string stGridFile="./evolution_test.dat";
+const std::string stGridFile="./evolution_xyeta.dat";
+//const std::string stGridFile="./evolution_test.dat";
 
 //Information about the spacetime grid
 //Number of cells of the grid
@@ -40,7 +40,7 @@ const int cellNb_eta=64;
 //Size of the cells
 const double CONST_cellsize_X=10./(cellNb_x-1); //In fm
 const double CONST_cellsize_Y=10./(cellNb_y-1); //In fm
-const double CONST_cellsize_Eta=10./(cellNb_eta-1); //In units of rapidity
+const double CONST_cellsize_Eta=10./(cellNb_eta); //In units of rapidity
 //Initial time tau_0
 const double CONST_tau0=0.4;
 const double CONST_effective_dTau=0.3;
@@ -99,7 +99,7 @@ const double CONST_CF=(CONST_Nc*CONST_Nc-1.0)/(2.0*CONST_Nc);
 const double CONST_alphaEM=1/137.0;
 const double CONST_alphaS=0.3;
 const double CONST_gs=sqrt(4*M_PI*CONST_alphaS);
-const double CONST_mInfOverT=CONST_CF*CONST_gs/2.0;
+const double CONST_mInfOverT=sqrt(CONST_CF)*CONST_gs/2.0;
 const double CONST_twoPiCubed=pow(2*M_PI,3);
 
 /*************************/
