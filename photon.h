@@ -54,7 +54,7 @@ const std::string viscosityFile="evolution_Wmunu_over_shear_xyeta.dat";
 //kT
 const double CONST_ktMin=0.2; //Minimum value for kT
 const double CONST_ktMax=4.0; //Maximum value for kT
-const int CONST_Nkt=10;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
+const int CONST_Nkt=5;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
 //const double kTdisc[3] = [0.2,4.0,0.2] //Discretization in kT: [kT min, kT max, delta kT]
 const int CONST_Nphi=16;  //phi
 //Rapidity
