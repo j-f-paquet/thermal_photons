@@ -12,10 +12,10 @@ int main() {
 	//Compute photon production
 	photon_prod();
 
-	std::cout << "Number of rates=" << CONST_rateList.size() << "\n";
-	for(int i=0; i<CONST_rateList.size();i++) {
-		std::cout << "rate " << i << ":" << CONST_rateList[i] << "\n";
-	}
+//	std::cout << "Number of rates=" << CONST_rateList.size() << "\n";
+//	for(int i=0; i<CONST_rateList.size();i++) {
+//		std::cout << "rate " << i << ":" << CONST_rateList[i] << "\n";
+//	}
 
 
 }
@@ -35,7 +35,7 @@ void photon_prod() {
 	float T_and_boosts[5], shear_info[10];
 	bool readRes; //Result of reading of the file
 	std::FILE * stFile; //Spacetime file
-	double tau;
+	//double tau;
 	int line=1; //Spacetime position inferred from line number
 	struct phaseSpace_pos curr_pos;
 	//The second to last dimension is meant for including an upper and a lower bound on the uncertainty, if possible
@@ -72,7 +72,7 @@ void photon_prod() {
 		readRes=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
 		line+=1;
 	//	readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
-		computeDescretizedSpectrum(CONST_viscosity, &curr_pos, T_and_boosts, 0, discSpectra);
+		if (T_and_boosts[0]>=CONST_freezeout_T) computeDescretizedSpectrum(CONST_viscosity, &curr_pos, T_and_boosts, 0, discSpectra);
 
 	}
 
@@ -168,7 +168,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 	double kL, kLx, kLy, kLz;
 	double kR, kHatkHatPiOver_e_P;
 	double coshEta, sinhEta, cosPhi, sinPhi, invCoshEta;
-	double stPosition[4];
+	//double stPosition[4];
 
 	//Assign those to local variables for convenience
 	T=T_and_boosts[0];
@@ -270,7 +270,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	double tmpRate;
 
 	//Loop over rates
-	for(int iRate=0; iRate<CONST_rateList.size();iRate++) {
+	for(unsigned int iRate=0; iRate<CONST_rateList.size();iRate++) {
 	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_rateList.size()];
 
 		//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
@@ -278,11 +278,14 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 
 		//tmpRate=CONST_rateList[iRate].c_str()(0.0,0.0,0.0);
-		//tmpRate=(*local_rate)(kR,T,kHatkHatPiOver_e_P);
-		tmpRate=1.0+cos((ikt+1)*iphi*CONST_delPhi);
+		tmpRate=(*local_rate)(kR,T,kHatkHatPiOver_e_P);
+		//tmpRate=1.0+cos((ikt+1)*iphi*CONST_delPhi);
+
+		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
+		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau;
 		
 		//Fill value
-		discSpectra[ieta][iphi][ikt][1][iRate]=tmpRate;
+		discSpectra[ieta][iphi][ikt][1][iRate]+=tmpRate;
 
 		//Fill lower bound uncertainty
 		discSpectra[ieta][iphi][ikt][0][iRate]=0.0;
@@ -310,7 +313,7 @@ void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
 	//There is (cellNb_x*cellNb_y*cellNb_eta) line per timestep
 	if ((line-1)%cellNb_x*cellNb_y*cellNb_eta == 0) {
 		//Update tau	
-		curr_pos->tau+=deltaTau;
+		curr_pos->tau+=CONST_effective_dTau;
 
 		/*
 		printf("New tau=%d at line %i\n",curr_pos->tau,line);

@@ -29,7 +29,8 @@
 //Format of the input files
 const bool CONST_binaryMode=0; //0 for text, 1 for binary
 //Location of the spacetime grid file
-const std::string stGridFile="./evolution_small.dat";
+//const std::string stGridFile="./evolution_xyeta.dat";
+const std::string stGridFile="./evolution_test.dat";
 
 //Information about the spacetime grid
 //Number of cells of the grid
@@ -37,12 +38,12 @@ const int cellNb_x=65;
 const int cellNb_y=65;
 const int cellNb_eta=64;
 //Size of the cells
-const double cellsize_X=10./(cellNb_x-1); //In fm
-const double cellsize_Y=10./(cellNb_y-1); //In fm
-const double cellsize_Eta=10./(cellNb_eta-1); //In units of rapidity
+const double CONST_cellsize_X=10./(cellNb_x-1); //In fm
+const double CONST_cellsize_Y=10./(cellNb_y-1); //In fm
+const double CONST_cellsize_Eta=10./(cellNb_eta-1); //In units of rapidity
 //Initial time tau_0
 const double CONST_tau0=0.4;
-const double deltaTau=0.001;
+const double CONST_effective_dTau=0.3;
 
 //Run with viscosity or not
 const bool CONST_viscosity=0; //0 for thermal, 1 for anisotropic
@@ -54,7 +55,7 @@ const std::string viscosityFile="evolution_Wmunu_over_shear_xyeta.dat";
 //kT
 const double CONST_ktMin=0.2; //Minimum value for kT
 const double CONST_ktMax=4.0; //Maximum value for kT
-const int CONST_Nkt=5;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
+const int CONST_Nkt=20;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
 //const double kTdisc[3] = [0.2,4.0,0.2] //Discretization in kT: [kT min, kT max, delta kT]
 const int CONST_Nphi=16;  //phi
 //Rapidity
@@ -81,7 +82,11 @@ const std::vector<std::string> CONST_rateList(char_rateList, char_rateList + CON
 const double CONST_midRapCut = 0.5;
 //Number of Fourier coefficient to compute
 const int CONST_FourierNb = 3;
-	
+
+//QGP fraction definition
+const double CONST_pure_QGP_T=0.22;	
+const double CONST_pure_HG_T=0.18;	
+const double CONST_freezeout_T=0.12;
 
 //Generate spectra sums from t0 to t_i with t_i \in CONST_tauList
 const double CONST_tauList[]={.6,1.0,2.0};
