@@ -34,16 +34,16 @@ const std::string stGridFile="./evolution_xyeta.dat";
 
 //Information about the spacetime grid
 //Number of cells of the grid
-const int cellNb_x=65;
-const int cellNb_y=65;
-const int cellNb_eta=64;
+const int cellNb_x=31;
+const int cellNb_y=31;
+const int cellNb_eta=16;
 //Size of the cells
-const double CONST_cellsize_X=10./(cellNb_x-1); //In fm
-const double CONST_cellsize_Y=10./(cellNb_y-1); //In fm
-const double CONST_cellsize_Eta=10./(cellNb_eta); //In units of rapidity
+const double CONST_cellsize_X=25./(cellNb_x-1); //In fm
+const double CONST_cellsize_Y=25./(cellNb_y-1); //In fm
+const double CONST_cellsize_Eta=12./(cellNb_eta); //In units of rapidity
 //Initial time tau_0
 const double CONST_tau0=0.4;
-const double CONST_effective_dTau=0.3;
+const double CONST_effective_dTau=0.03*10;
 
 //Run with viscosity or not
 const bool CONST_viscosity=0; //0 for thermal, 1 for anisotropic

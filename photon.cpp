@@ -450,7 +450,7 @@ void compute_midrapidity_yield_and_vn(int rate_id, double discSpectra[CONST_Neta
 
 			//Multiply by delta_ph and divide by the rapidity integration range 
 			//(to yield an average instead of an integral)
-			yield*=CONST_delPhi/rap_interval;
+			yield*=CONST_delPhi/rap_interval/(2.0*M_PI);
 			for(int j=1;j<=CONST_FourierNb; j++) {
 				vn[j]*=CONST_delPhi/rap_interval;
 			}
