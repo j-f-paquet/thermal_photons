@@ -53,15 +53,26 @@ double prefA(double kOverT, double T) {
 
 }
 
-//QGP ideal rate
-double rate_qgp_ideal_born(double kOverT, double T, double kkPiOver_e_P_k2) {
+//QGP ideal rate - AMY fit [arXiv:hep-ph/0111107, section I]
+double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2) {
 
 	//Forward declaration
 	double C_hard(double kOverT);
 
-	return QGP_fraction(T)*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
+	return kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
 
 }
+
+
+//QGP ideal rate - KLS high k/T, low g formula [Kapusta et al, PRD44, 9 (1991), eq.41]
+double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	const double qCharge2[]={4.0/9.0,5.0/9.0,2.0/3.0,10.0/9.0,11.0/9.0,5.0/3.0};
+
+	return QGP_fraction(T)*qCharge2[CONST_Nf-1]*CONST_alphaEM*CONST_alphaS/(2.0*M_PI*M_PI)*T*T*exp(-kOverT)*log(2.912*kOverT/(CONST_gs*CONST_gs));
+
+}
+
 
 ////QGP viscous rate
 //double factor_born_viscous(double kOverT) {

@@ -68,8 +68,9 @@ void photon_prod() {
 		readRes=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
 		line+=1;
 	//	readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
-		if (T_and_boosts[0]>=CONST_freezeout_T) computeDescretizedSpectrum(CONST_viscosity, &curr_pos, T_and_boosts, 0, discSpectra);
-
+		if (T_and_boosts[0]>=CONST_freezeout_T) {
+			computeDescretizedSpectrum(CONST_viscosity, &curr_pos, T_and_boosts, 0, discSpectra);
+		}
 		//Compute (tau,x,y,eta) from line number
 		infer_position_info(line,&curr_pos);
 	}
@@ -174,8 +175,13 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 	betay=T_and_boosts[3];
 	betaz=T_and_boosts[4];
 
+	//
+	//if (betax*betax+betay*betay+betaz*betaz >= 1) {
+	//	std::cout << "WTF!!!!!!!!!!!: beta>1!!" << betax*betax+betay*betay+betaz*betaz << "\n";
+	//}
+
 	//Pre-compute gamma for efficiency
-	gamma=1.0/sqrt(1+betax*betax+betay*betay+betaz*betaz);
+	gamma=1.0/sqrt(1-(betax*betax+betay*betay+betaz*betaz));
 
 	//Compute (tau,x,y,eta) from line number
 	//Check if
@@ -258,7 +264,9 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHatkHatPiOver_e_P, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 
 	//
-	double rate_qgp_ideal_born(double, double, double);
+	double rate_qgp_ideal_born_AMYfit(double, double, double);
+	double rate_qgp_ideal_born_KLS(double, double, double);
+	double QGP_fraction(double T);
 
 	//
 	int ieta=curr_pos->ieta;
@@ -271,11 +279,17 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_rateList.size()];
 
 		//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
-		double (*local_rate)(double, double, double) = rate_qgp_ideal_born;
+		double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
+		//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_KLS;
 
 		//tmpRate=CONST_rateList[iRate].c_str()(0.0,0.0,0.0);
 		tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
-		//tmpRate=1.0+cos((ikt+1)*iphi*CONST_delPhi);
+		//tmpRate=kR*(1.0+cos(kR*(2.0)*iphi*CONST_delPhi));
+
+		if (T>CONST_pure_HG_T) std::cout << T<<"\t"<<kR/T<<"\t"<<CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau<<"\t"<<QGP_fraction(T)<<"\n";
+
+		//QGP fraction
+		tmpRate*=QGP_fraction(T);
 
 		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
 		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau;
@@ -307,7 +321,7 @@ void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
 	//curr_pos->eta=-1;
 
 	//There is (cellNb_x*cellNb_y*cellNb_eta) line per timestep
-	if ((line-1)%cellNb_x*cellNb_y*cellNb_eta == 0) {
+	if ((line-1)%(cellNb_x*cellNb_y*cellNb_eta) == 0) {
 		//Update tau	
 		curr_pos->tau+=CONST_effective_dTau;
 
@@ -379,7 +393,7 @@ void compute_midrapidity_yield_and_vn(int rate_id, double discSpectra[CONST_Neta
 		eta=CONST_etaMin+ieta*CONST_delEta;	
 
 		if (fabs(eta) <= CONST_midRapCut) {
-			iEtamin++;
+			iEtamin=ieta;
 			iEtamax=ieta;
 		}
 		else if (fabs(eta) > CONST_midRapCut) {
@@ -452,7 +466,7 @@ void compute_midrapidity_yield_and_vn(int rate_id, double discSpectra[CONST_Neta
 			//(to yield an average instead of an integral)
 			yield*=CONST_delPhi/rap_interval/(2.0*M_PI);
 			for(int j=1;j<=CONST_FourierNb; j++) {
-				vn[j]*=CONST_delPhi/rap_interval;
+				vn[j]*=CONST_delPhi/rap_interval/(2.0*M_PI);
 			}
 
 			//Output result

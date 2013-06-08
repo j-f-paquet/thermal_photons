@@ -55,16 +55,16 @@ const std::string viscosityFile="evolution_Wmunu_over_shear_xyeta.dat";
 //kT
 const double CONST_ktMin=0.2; //Minimum value for kT
 const double CONST_ktMax=4.0; //Maximum value for kT
-const int CONST_Nkt=20;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
+const int CONST_Nkt=5;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
 //const double kTdisc[3] = [0.2,4.0,0.2] //Discretization in kT: [kT min, kT max, delta kT]
-const int CONST_Nphi=16;  //phi
+const int CONST_Nphi=10;  //phi
 //Rapidity
-const double CONST_etaMin=-1.0; //Minimum value for eta
-const double CONST_etaMax=1.0; //Maximum value for eta
-const int CONST_Neta=3;  //Warning: delta eta=(etaMax-etamin)/(Nkt-1)
+const double CONST_etaMin=-0.0; //Minimum value for eta
+const double CONST_etaMax=0.0; //Maximum value for eta
+const int CONST_Neta=1;  //Warning: delta eta=(etaMax-etamin)/(Nkt-1)
 
 //Deltas used for the (uniform) discretization of the grid
-const double CONST_delEta=(CONST_etaMax-CONST_etaMin)/(CONST_Neta-1.0);
+const double CONST_delEta= CONST_Neta > 1 ? (CONST_etaMax-CONST_etaMin)/(CONST_Neta-1.0) : 0;
 const double CONST_delPhi=(2*M_PI)/(CONST_Nphi-1.0);
 const double CONST_delKt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
 
@@ -81,12 +81,12 @@ const std::vector<std::string> CONST_rateList(char_rateList, char_rateList + CON
 //Mid-rapidity cut: the midrapidity result will be an average over approximatively -midRapCut to midRapCut
 const double CONST_midRapCut = 0.5;
 //Number of Fourier coefficient to compute
-const int CONST_FourierNb = 3;
+const int CONST_FourierNb = 2;
 
 //QGP fraction definition
 const double CONST_pure_QGP_T=0.22;	
-const double CONST_pure_HG_T=0.18;	
-const double CONST_freezeout_T=0.12;
+const double CONST_pure_HG_T=0.184;	
+const double CONST_freezeout_T=0.137;
 
 //Generate spectra sums from t0 to t_i with t_i \in CONST_tauList
 const double CONST_tauList[]={.6,1.0,2.0};
