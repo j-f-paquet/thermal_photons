@@ -27,14 +27,16 @@ void photon_prod() {
 	//Forward declaration of functions
 	void openFileRead(bool binary, std::string filename, void ** pointer);
 	bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
+	bool viscRead(bool binary, void * file, float visc_info[]);
 	void infer_position_info(int line, struct phaseSpace_pos *curr_pos);
-	void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float shear_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
+	void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 	void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	//Variables
-	float T_and_boosts[5], shear_info[10];
-	bool readRes; //Result of reading of the file
+	float T_and_boosts[5], visc_info[10];
+	bool read_T_flag, read_visc_flag; //Result of reading of the file
 	std::FILE * stFile; //Spacetime file
+	std::FILE * viscFile; //Spacetime file
 	//double tau;
 	int line=1; //Spacetime position inferred from line number
 	struct phaseSpace_pos curr_pos;
@@ -55,28 +57,33 @@ void photon_prod() {
 
 	//Open spacetime grid file
 	openFileRead(CONST_binaryMode, stGridFile, (void **) &stFile);
+	if (CONST_with_viscosity) openFileRead(CONST_binaryMode, stGridFile, (void **) &viscFile);
 
 	//Read the first line of the spacetime grid
 	//readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
-	readRes=spacetimeRead(CONST_binaryMode, stFile, &T_and_boosts[0]);
+	read_T_flag=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
+	if (CONST_with_viscosity) read_visc_flag=viscRead(CONST_binaryMode, viscFile, visc_info);
 	//Loop over the rest of the file
-	while (readRes) {
+	while ((read_T_flag)&&((!CONST_with_viscosity)||(read_visc_flag && CONST_with_viscosity))) {
 		//Do stuff
 		//printf("Temp=%f\n",T_and_boosts[0]);
 
-		//Try to read the next line
-		readRes=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
-		line+=1;
 	//	readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
 		if (T_and_boosts[0]>=CONST_freezeout_T) {
-			computeDescretizedSpectrum(CONST_viscosity, &curr_pos, T_and_boosts, 0, discSpectra);
+			computeDescretizedSpectrum(CONST_with_viscosity, &curr_pos, T_and_boosts, visc_info, discSpectra);
 		}
 		//Compute (tau,x,y,eta) from line number
 		infer_position_info(line,&curr_pos);
+
+		//Try to read the next line
+		read_T_flag=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
+		if (CONST_with_viscosity) read_visc_flag=viscRead(CONST_binaryMode, viscFile, visc_info);
+		line+=1;
 	}
 
 	//Close spacetime grid file
 	std::fclose(stFile);
+	if (CONST_with_viscosity) std::fclose(viscFile);
 
 	//Compute observables from the discretized photon spectra
 	//compObservables();
@@ -129,17 +136,17 @@ bool spacetimeRead(bool binary, void * file, float T_and_boosts[]) {
 
 }
 
-//Read shear file 
-bool shearRead(bool binary, void * file, float shear_info[]) {
+//Read file with info about viscous hydro 
+bool viscRead(bool binary, void * file, float visc_info[]) {
 
 	int elemRead;
 
 	//If binary
 	if (binary) {
-		elemRead=std::fread(&shear_info,10*sizeof(float),10,(std::FILE *) file);
+		elemRead=std::fread(&visc_info,10*sizeof(float),10,(std::FILE *) file);
 	}
 	else {
-		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f %f %f %f %f %f", &shear_info[0], &shear_info[1], &shear_info[2], &shear_info[3], &shear_info[4], &shear_info[5], &shear_info[6], &shear_info[7], &shear_info[8], &shear_info[9]);
+		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f %f %f %f %f %f", &visc_info[0], &visc_info[1], &visc_info[2], &visc_info[3], &visc_info[4], &visc_info[5], &visc_info[6], &visc_info[7], &visc_info[8], &visc_info[9]);
 	}
 
 	//If fscanf couldn't read the five elements, it's the end of the file or there's a problem
@@ -154,7 +161,7 @@ bool shearRead(bool binary, void * file, float shear_info[]) {
 
 
 /***** Computation of the discretized spectrum *****/
-void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float shear_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 	
 	//Forward declaration
 	//void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double Akk, double * discSpectra);
@@ -218,7 +225,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 					//kkPiOverEta=A00 + 1/cosh(eta)*( 2*(A01*k1+A02*k2+A03*k3) + 1/cosheta*() )
 					//kkPiOverEta=A00 + 1/cosh(eta)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(eta)^2)+2/cosh(eta)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(eta)+1/cosh(eta)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(eta)+A23*sin(phi)*sinh(eta)))
 					//kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
-					kHatkHatPiOver_e_P=shear_info[0] + invCoshEta*invCoshEta*( shear_info[4]*cosPhi*cosPhi + shear_info[7]*sinPhi*sinPhi + shear_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( shear_info[1]*cosPhi + shear_info[2]*sinPhi + shear_info[3]*sinhEta + invCoshEta*( shear_info[5]*cosPhi*sinPhi + shear_info[6]*cosPhi*sinhEta + shear_info[8]*sinPhi*sinhEta));
+					kHatkHatPiOver_e_P=visc_info[0] + invCoshEta*invCoshEta*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( visc_info[1]*cosPhi + visc_info[2]*sinPhi + visc_info[3]*sinhEta + invCoshEta*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhEta + visc_info[8]*sinPhi*sinhEta));
 					
 					//Akk=(*shear_info)+invCoshEta( (*shear_info+4)*cosPhi*cosPhi);
 				}
