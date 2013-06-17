@@ -41,9 +41,7 @@ void photon_prod() {
 	int line=1; //Spacetime position inferred from line number
 	struct phaseSpace_pos curr_pos;
 	//The second to last dimension is meant for including an upper and a lower bound on the uncertainty, if possible
-	//discSpectra[][][][0][] is for the lower bound
-	//discSpectra[][][][1][] is for the value bound
-	//discSpectra[][][][2][] is for the upper bound
+	//discSpectra[][][][0/1/2][] is for the lower bound/value/upper bound
 	double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates] = {0.0};
 
 	//rate(kOverT)=rate_ideal(koverT)+\hat{k}_\alpha \hat{k}_\beta \Pi^{\alpha \beta}*factor_born_viscous(kOverT)
@@ -51,24 +49,18 @@ void photon_prod() {
 
 	//Initialise spacetime position
 	curr_pos.tau=CONST_tau0;
-//	//Skip any time in CONST_tauList that is smaller than CONST_tau0
-//	for(curr_pos.iTauList=0;CONST_tauList[curr_pos.iTauList]<CONST_tau0;curr_pos.iTauList+=1);
-//	curr_pos.newiTau=0;
 
 	//Open spacetime grid file
 	openFileRead(CONST_binaryMode, stGridFile, (void **) &stFile);
 	if (CONST_with_viscosity) openFileRead(CONST_binaryMode, stGridFile, (void **) &viscFile);
 
 	//Read the first line of the spacetime grid
-	//readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
 	read_T_flag=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
 	if (CONST_with_viscosity) read_visc_flag=viscRead(CONST_binaryMode, viscFile, visc_info);
 	//Loop over the rest of the file
 	while ((read_T_flag)&&((!CONST_with_viscosity)||(read_visc_flag && CONST_with_viscosity))) {
 		//Do stuff
-		//printf("Temp=%f\n",T_and_boosts[0]);
 
-	//	readRes=spacetimeRead(binaryMode, stFile, &T, &qgp, &ux, &uy, &uz);
 		if (T_and_boosts[0]>=CONST_freezeout_T) {
 			computeDescretizedSpectrum(CONST_with_viscosity, &curr_pos, T_and_boosts, visc_info, discSpectra);
 		}
@@ -86,7 +78,6 @@ void photon_prod() {
 	if (CONST_with_viscosity) std::fclose(viscFile);
 
 	//Compute observables from the discretized photon spectra
-	//compObservables();
 	compute_observables(discSpectra);
 
 }
@@ -102,8 +93,6 @@ void openFileRead(bool binary, std::string filename, void ** pointer) {
 	else {
 		*pointer=std::fopen(filename.c_str(),"r");
 	}
-
-	//std::printf("Pointer=%p\n",*pointer);
 
 	//Check if it opened correctly
 	if (NULL==*pointer) {
@@ -149,7 +138,7 @@ bool viscRead(bool binary, void * file, float visc_info[]) {
 		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f %f %f %f %f %f", &visc_info[0], &visc_info[1], &visc_info[2], &visc_info[3], &visc_info[4], &visc_info[5], &visc_info[6], &visc_info[7], &visc_info[8], &visc_info[9]);
 	}
 
-	//If fscanf couldn't read the five elements, it's the end of the file or there's a problem
+	//If fscanf couldn't read the ten elements, it's the end of the file or there's a problem
 	if (elemRead != 10) {
 		return 0;
 	}
@@ -164,7 +153,6 @@ bool viscRead(bool binary, void * file, float visc_info[]) {
 void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 	
 	//Forward declaration
-	//void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double Akk, double * discSpectra);
 	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	//Local variables
@@ -182,16 +170,10 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 	betay=T_and_boosts[3];
 	betaz=T_and_boosts[4];
 
-	//
-	//if (betax*betax+betay*betay+betaz*betaz >= 1) {
-	//	std::cout << "WTF!!!!!!!!!!!: beta>1!!" << betax*betax+betay*betay+betaz*betaz << "\n";
-	//}
-
 	//Pre-compute gamma for efficiency
 	gamma=1.0/sqrt(1-(betax*betax+betay*betay+betaz*betaz));
 
 	//Compute (tau,x,y,eta) from line number
-	//Check if
 
 	//Loop over transverse momentum kT, azimuthal angle phi and rapidity eta
 	//(note that there is no different here between the rapidity and the pseudorapidity, the photon being massless)
@@ -249,10 +231,6 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 
 				//Our rate
 				//dGamma(\vec{k}_L)=dGamma_0(k_rf)+(A_L)_{alpha beta} k_L^alpha k_L^beta Z(rf) 
-				/*stPosition[0]=tau;
-				stPosition[1]=ieta;
-				stPosition[2]=iphi;
-				stPosition[3]=ikt;*/
 				curr_pos->ikt=ikt;
 				curr_pos->iphi=iphi;
 				curr_pos->ieta=ieta;
@@ -312,12 +290,6 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 	}
 
-	//Compute rates
-	//rate_dusling(double kR, double T, double kkPiOverEta double * res, double * remainder);
-
-	//Store rates
-
-
 }
 
 void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
@@ -357,7 +329,6 @@ void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3
 	//One file per rate
 	for(int i=0; i<CONST_N_rates; i++) {
 
-		//compute_midrapidity_yield_and_vn(&outfile, &discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][i]);
 		compute_midrapidity_yield_and_vn(i, discSpectra);
 
 	}
@@ -491,8 +462,4 @@ void compute_midrapidity_yield_and_vn(int rate_id, double discSpectra[CONST_Neta
 	//Close file
 	outfile.close();
 
-
-
 }
-
-
