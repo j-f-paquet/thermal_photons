@@ -251,6 +251,8 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	//
 	double rate_qgp_ideal_born_AMYfit(double, double, double);
 	double rate_qgp_ideal_born_KLS(double, double, double);
+	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
 	double QGP_fraction(double T);
 
 	//
@@ -258,20 +260,35 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	int iphi=curr_pos->iphi;
 	int ikt=curr_pos->ikt;
 	double tmpRate;
+	double (*local_rate)(double, double, double);
 
 	//Loop over rates
-	for(unsigned int iRate=0; iRate<CONST_rateList.size();iRate++) {
+	for(unsigned int iRate=0; iRate<CONST_N_rates;iRate++) {
 	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_rateList.size()];
 
 		//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
-		double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
+		switch(CONST_rates_to_use[iRate]) {
+			case 1:
+				//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
+				local_rate = rate_qgp_ideal_born_AMYfit;
+				break;
+			case 2: 
+				local_rate = rate_qgp_ideal_born_KLS;
+				break;
+			case 3: 
+				local_rate = rate_qgp_ideal_born_JF_sqrtg;
+				break;
+			case 4:
+				local_rate = rate_qgp_viscous_only_born_JF_sqrtg;
+				break;
+		}
 		//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_KLS;
 
 		//tmpRate=CONST_rateList[iRate].c_str()(0.0,0.0,0.0);
 		tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
 		//tmpRate=kR*(1.0+cos(kR*(2.0)*iphi*CONST_delPhi));
 
-		if (T>CONST_pure_HG_T) std::cout << T<<"\t"<<kR/T<<"\t"<<CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau<<"\t"<<QGP_fraction(T)<<"\n";
+		//if (T>CONST_pure_HG_T) std::cout << T<<"\t"<<kR/T<<"\t"<<CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau<<"\t"<<QGP_fraction(T)<<"\n";
 
 		//QGP fraction
 		tmpRate*=QGP_fraction(T);
@@ -346,7 +363,7 @@ void compute_midrapidity_yield_and_vn(int rate_id, double discSpectra[CONST_Neta
 	//Set output file name
 	std::stringstream tmpStr;
 	tmpStr << "vn_";
-	tmpStr << CONST_rateList[rate_id];
+	tmpStr << CONST_rate_names[rate_id];
 	tmpStr << ".dat";
 
 	//Open output file

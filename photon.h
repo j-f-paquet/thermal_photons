@@ -78,10 +78,20 @@ const double CONST_delKt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
 //const int miaw[] = {1,2,3,4};
 //const char char_rateList[4][100] = {"01", "02", "03", "04"};
 //std::vector<std::string> v(char_rateList, char_rateList + 4);
-const char char_rateList[][100] = {"rate_qgp_ideal_Born"};
-//, "ideal_LL", "viscous_Dusling", "viscous_LL", "ideal_LL", "viscous_Dusling", "viscous_LL"};
-const int CONST_N_rates=int(sizeof(char_rateList)/sizeof(char)/100.);
-const std::vector<std::string> CONST_rateList(char_rateList, char_rateList + CONST_N_rates);
+/*
+Rates:
+1: double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2);
+2: double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2);
+3: double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+4: double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+*/
+const int CONST_rates_to_use[] = {1,2,3,4};
+const int CONST_N_rates = sizeof(CONST_rates_to_use)/sizeof(int);
+//
+const char char_standard_rateList[][100] = {"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg"};
+const int CONST_N_standard_rates=int(sizeof(char_standard_rateList)/sizeof(char)/100.);
+const std::vector<std::string> CONST_rate_names(char_standard_rateList, char_standard_rateList + CONST_N_standard_rates);
+
 
 //Mid-rapidity cut: the midrapidity result will be an average over approximatively -midRapCut to midRapCut
 const double CONST_midRapCut = 0.5;
