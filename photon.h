@@ -54,15 +54,15 @@ const bool CONST_with_shear_viscosity=MUSIC_with_shear_viscosity; //0 for therma
 const bool CONST_with_viscosity=CONST_with_shear_viscosity;
 //const double shear_to_s=0.08;
 //Location of the viscous files
-const std::string viscosityFile="evolution_Wmunu_over_shear_xyeta.dat";
+const std::string viscosityFile="evolution_Wmunu_over_epsilon_plus_P_xyeta.dat";
 
 //Discretization of photon spectrum
 //kT
 const double CONST_ktMin=0.2; //Minimum value for kT
 const double CONST_ktMax=4.0; //Maximum value for kT
-const int CONST_Nkt=5;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
+const int CONST_Nkt=20;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
 //const double kTdisc[3] = [0.2,4.0,0.2] //Discretization in kT: [kT min, kT max, delta kT]
-const int CONST_Nphi=10;  //phi
+const int CONST_Nphi=16;  //phi
 //Rapidity
 const double CONST_etaMin=-0.0; //Minimum value for eta
 const double CONST_etaMax=0.0; //Maximum value for eta
