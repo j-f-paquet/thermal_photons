@@ -85,10 +85,10 @@ Rates:
 3: double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
 4: double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
 */
-const int CONST_rates_to_use[] = {1,2,3,4};
+const int CONST_rates_to_use[] = {1,2,3,4,5};
 const int CONST_N_rates = sizeof(CONST_rates_to_use)/sizeof(int);
 //
-const char char_standard_rateList[][100] = {"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg"};
+const char char_standard_rateList[][100] = {"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg","rate_hg_ideal_Turbide_fit"};
 const int CONST_N_standard_rates=int(sizeof(char_standard_rateList)/sizeof(char)/100.);
 const std::vector<std::string> CONST_rate_names(char_standard_rateList, char_standard_rateList + CONST_N_standard_rates);
 

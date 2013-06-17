@@ -253,6 +253,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	double rate_qgp_ideal_born_KLS(double, double, double);
 	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
 	double QGP_fraction(double T);
 
 	//
@@ -281,6 +282,8 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 			case 4:
 				local_rate = rate_qgp_viscous_only_born_JF_sqrtg;
 				break;
+			case 5:
+				local_rate = rate_hg_ideal_Turbide_fit;
 		}
 		//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_KLS;
 
@@ -291,7 +294,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 		//if (T>CONST_pure_HG_T) std::cout << T<<"\t"<<kR/T<<"\t"<<CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau<<"\t"<<QGP_fraction(T)<<"\n";
 
 		//QGP fraction
-		tmpRate*=QGP_fraction(T);
+		//tmpRate*=QGP_fraction(T);
 
 		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
 		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau;
