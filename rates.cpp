@@ -112,7 +112,7 @@ double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiO
 
 	double res = QGP_fraction(T);
 	//
-	if (res > 0) res*=kOverT*prefA(kOverT,T)/CONST_twoPiCubed*kkPiOver_e_P_k2*exp(-0.5041041126181884 + (-0.5335015716121183 + 1.9967643068761307*kOverT - 0.5616138941792664*kOverT*kOverT - 0.0009120108228910325*kOverT*kOverT*kOverT)/(1 - 2.607918425474197*kOverT - 0.8369709712322181*kOverT*kOverT))*pow(kOverT,2.1309931380115588);
+	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*kkPiOver_e_P_k2*exp(-0.5041041126181884 + (-0.5335015716121183 + 1.9967643068761307*kOverT - 0.5616138941792664*kOverT*kOverT - 0.0009120108228910325*kOverT*kOverT*kOverT)/(1 - 2.607918425474197*kOverT - 0.8369709712322181*kOverT*kOverT))*pow(kOverT,2.1309931380115588);
 	
 	return res;
 
