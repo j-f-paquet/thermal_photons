@@ -53,7 +53,7 @@ double prefA(double kOverT, double T) {
 
 }
 
-//QGP ideal rate - AMY fit [arXiv:hep-ph/0111107, section I]
+//QGP ideal rate - Born - AMY fit [arXiv:hep-ph/0111107, section I]
 double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2) {
 
 	//Forward declaration
@@ -62,6 +62,21 @@ double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k
 	double res=QGP_fraction(T);
 
 	if (res > 0) res*=kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
+
+	return res;
+
+}
+
+//QGP ideal rate - LO - AMY fit [arXiv:hep-ph/0111107, section I]
+double rate_qgp_ideal_LO_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//Forward declaration
+	double C_hard(double kOverT);
+	double C_LPM(double kOverT);
+
+	double res=QGP_fraction(T);
+
+	if (res > 0) res*=kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT)+C_LPM(kOverT));
 
 	return res;
 
@@ -115,6 +130,14 @@ double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiO
 double C_hard(double kOverT) {
 
 	return 1/2.0*log(2*kOverT)+0.041/kOverT-0.3615+1.01*exp(-1.35*kOverT);
+
+}
+
+//AMY fits (from arXiv:1302.5970, see also arXiv:hep-ph/0111107)
+//Valid for 0.2<k/T<50
+double C_LPM(double kOverT) {
+
+	return sqrt(1+CONST_Nf/6.0)*(0.548*log(12.28+1.0/kOverT)*pow(kOverT,-3.0/2.0)+0.133*kOverT/sqrt(1+kOverT/16.27));
 
 }
 
