@@ -254,6 +254,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_ideal_LO_AMYfit(double, double, double);
 	double QGP_fraction(double T);
 
 	//
@@ -284,6 +285,8 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 				break;
 			case 5:
 				local_rate = rate_hg_ideal_Turbide_fit;
+			case 6:
+				local_rate = rate_qgp_ideal_LO_AMYfit;
 		}
 		//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_KLS;
 
