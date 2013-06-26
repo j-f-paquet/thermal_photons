@@ -120,6 +120,8 @@ const double CONST_alphaS=0.3;
 const double CONST_gs=sqrt(4*M_PI*CONST_alphaS);
 const double CONST_mInfOverT=sqrt(CONST_CF)*CONST_gs/2.0;
 const double CONST_twoPiCubed=pow(2*M_PI,3);
+const double CONST_hbarc=0.1973;
+const double CONST_GeV2_to_GeVm2_fmm4=1.0/(CONST_hbarc*CONST_hbarc*CONST_hbarc*CONST_hbarc);
 
 /*************************/
 

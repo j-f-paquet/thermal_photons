@@ -61,7 +61,7 @@ double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k
 
 	double res=QGP_fraction(T);
 
-	if (res > 0) res*=kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
+	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
 
 	return res;
 
@@ -76,7 +76,7 @@ double rate_qgp_ideal_LO_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2)
 
 	double res=QGP_fraction(T);
 
-	if (res > 0) res*=kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT)+C_LPM(kOverT));
+	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT)+C_LPM(kOverT));
 
 	return res;
 
@@ -90,7 +90,7 @@ double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2) 
 
 	double res=QGP_fraction(T);
 
-	if (res > 0) res*=qCharge2[CONST_Nf-1]*CONST_alphaEM*CONST_alphaS/(2.0*M_PI*M_PI)*T*T*exp(-kOverT)*log(2.912*kOverT/(CONST_gs*CONST_gs));
+	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*qCharge2[CONST_Nf-1]*CONST_alphaEM*CONST_alphaS/(2.0*M_PI*M_PI)*T*T*exp(-kOverT)*log(2.912*kOverT/(CONST_gs*CONST_gs));
 
 	return res;
 
@@ -101,7 +101,7 @@ double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P
 
 	double res=QGP_fraction(T);
 
-	if (res > 0) res*=kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(0.8452052719374467 + 0.06345436545672481*kOverT + 0.20266453593373313*kOverT*kOverT + 0.007103855524696941*kOverT*kOverT*kOverT)/(1 + 0.3137709585719375*kOverT + 0.12623968017081683*kOverT*kOverT + 0.0021744062978126125*kOverT*kOverT*kOverT);
+	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(0.8452052719374467 + 0.06345436545672481*kOverT + 0.20266453593373313*kOverT*kOverT + 0.007103855524696941*kOverT*kOverT*kOverT)/(1 + 0.3137709585719375*kOverT + 0.12623968017081683*kOverT*kOverT + 0.0021744062978126125*kOverT*kOverT*kOverT);
 
 	return res;
 
