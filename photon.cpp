@@ -315,7 +315,6 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 	}
 
-	std::cout << "Done with time slice " << curr_pos->tau << " fm^-1\n";
 
 }
 
@@ -327,9 +326,13 @@ void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
 	//curr_pos->eta=-1;
 
 	//There is (cellNb_x*cellNb_y*cellNb_eta) line per timestep
-	if ((line-1)%(cellNb_x*cellNb_y*cellNb_eta) == 0) {
+	if (((line-1)%(cellNb_x*cellNb_y*cellNb_eta) == 0)&&(line != 1)) {
+
+		std::cout << "Done with time slice " << curr_pos->tau << " fm^-1\n";
+
 		//Update tau	
 		curr_pos->tau+=CONST_effective_dTau;
+
 
 		/*
 		printf("New tau=%d at line %i\n",curr_pos->tau,line);
