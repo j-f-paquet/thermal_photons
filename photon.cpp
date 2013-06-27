@@ -315,6 +315,8 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 	}
 
+	std::cout << "Done with time slice " << curr_pos->tau << " fm^-1\n";
+
 }
 
 void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
