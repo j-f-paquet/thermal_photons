@@ -285,8 +285,10 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 				break;
 			case 5:
 				local_rate = rate_hg_ideal_Turbide_fit;
+				break;
 			case 6:
 				local_rate = rate_qgp_ideal_LO_AMYfit;
+				break;
 		}
 		//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_KLS;
 
