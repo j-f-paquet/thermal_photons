@@ -29,7 +29,7 @@ void photon_prod() {
 	bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
 	bool viscRead(bool binary, void * file, float visc_info[]);
 	void infer_position_info(int line, struct phaseSpace_pos *curr_pos);
-	void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
+	void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 	void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	//Variables
@@ -62,7 +62,7 @@ void photon_prod() {
 		//Do stuff
 
 		if (T_and_boosts[0]>=CONST_freezeout_T) {
-			computeDescretizedSpectrum(CONST_with_viscosity, &curr_pos, T_and_boosts, visc_info, discSpectra);
+			pre_computeDescretizedSpectrum(CONST_with_viscosity, &curr_pos, T_and_boosts, visc_info, discSpectra);
 		}
 		//Compute (tau,x,y,eta) from line number
 		infer_position_info(line,&curr_pos);
@@ -144,6 +144,29 @@ bool viscRead(bool binary, void * file, float visc_info[]) {
 	}
 	else {
 		return 1;
+	}
+
+}
+
+
+void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+
+	//Forward declaration
+	void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
+
+	if (!CONST_boost_invariant) {
+		computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
+	}
+	else {
+		const int nb_steps_eta=100;
+		const double max_eta=4.0;
+		double eta;
+		//Integrate in eta
+		for(int j=0;j<nb_steps_eta;j++) {
+			eta=-1*max_eta+2*max_eta*j/(nb_steps_eta-1);
+			T_and_boosts[4]=tanh(eta);
+			computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
+		}
 	}
 
 }

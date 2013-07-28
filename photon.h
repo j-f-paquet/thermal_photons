@@ -49,6 +49,8 @@ const double CONST_cellsize_Eta=MUSIC_deta; //In units of rapidity
 const double CONST_tau0=MUSIC_tau0;
 const double CONST_effective_dTau=MUSIC_effective_dtau;
 
+const bool CONST_boost_invariant=1;
+
 //Run with viscosity or not
 const bool CONST_with_shear_viscosity=MUSIC_with_shear_viscosity; //0 for thermal, 1 for anisotropic
 const bool CONST_with_viscosity=CONST_with_shear_viscosity;
