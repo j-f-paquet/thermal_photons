@@ -28,7 +28,7 @@ void photon_prod() {
 	void openFileRead(bool binary, std::string filename, void ** pointer);
 	bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
 	bool viscRead(bool binary, void * file, float visc_info[]);
-	void infer_position_info(int line, struct phaseSpace_pos *curr_pos);
+	void update_position_info(int line, struct phaseSpace_pos *curr_pos);
 	void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 	void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
@@ -49,6 +49,10 @@ void photon_prod() {
 
 	//Initialise spacetime position
 	curr_pos.tau=CONST_tau0;
+	curr_pos.itau=1;
+	curr_pos.ix=1;
+	curr_pos.iy=1;
+	curr_pos.ieta=1;
 
 	//Open spacetime grid file
 	openFileRead(CONST_binaryMode, stGridFile, (void **) &stFile);
@@ -61,11 +65,13 @@ void photon_prod() {
 	while ((read_T_flag)&&((!CONST_with_viscosity)||(read_visc_flag && CONST_with_viscosity))) {
 		//Do stuff
 
+		std::cout << "Line " << line << "=Position (itau,ix,iy,ieta)=(" << curr_pos.itau << "," << curr_pos.ix << "," << curr_pos.iy << "," << curr_pos.ieta << ")\n";
+
 		if (T_and_boosts[0]>=CONST_freezeout_T) {
 			pre_computeDescretizedSpectrum(CONST_with_viscosity, &curr_pos, T_and_boosts, visc_info, discSpectra);
 		}
 		//Compute (tau,x,y,eta) from line number
-		infer_position_info(line,&curr_pos);
+		update_position_info(line,&curr_pos);
 
 		//Try to read the next line
 		read_T_flag=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
@@ -158,14 +164,32 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 		computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
 	}
 	else {
-		const int nb_steps_eta=100;
-		const double max_eta=4.0;
-		double eta;
-		//Integrate in eta
-		for(int j=0;j<nb_steps_eta;j++) {
-			eta=-1*max_eta+2*max_eta*j/(nb_steps_eta-1);
-			T_and_boosts[4]=tanh(eta);
-			computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
+		const int eta_slice_choice=cellNb_eta/2;
+		//Integrate only over 1 slice in eta
+		if (eta_slice_choice == curr_pos->ieta) {
+			double eta, eta_slice;
+			double old_u0, new_u0;
+			double ux, uy;
+			eta_slice=(-cellNb_eta/2+eta_slice_choice-1)*CONST_cellsize_Eta;
+			//old_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-tanh(eta_slice)*tanh(eta_slice));
+			old_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-T_and_boosts[4]*T_and_boosts[4]);
+			ux=T_and_boosts[2]*old_u0;
+			uy=T_and_boosts[3]*old_u0;
+			//std::cout << "wtf=" << tanh(eta_slice) << "=" << T_and_boosts[4] << "\n";
+			//std::cout << old_u0 << "?=" << 1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-T_and_boosts[4]*T_and_boosts[4]) << "\n";
+			//std::cout << "ux=" << T_and_boosts[2]*old_u0 << "\n";
+
+			//Integrate in eta
+			for(int j=0;j<CONST_nb_steps_eta_integration;j++) {
+				eta=-1*CONST_max_eta_integration+2*CONST_max_eta_integration*j/(CONST_nb_steps_eta_integration-1);
+				//new_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-tanh(eta)*tanh(eta));
+				new_u0=sqrt((1+pow(T_and_boosts[2]*old_u0,2)+pow(T_and_boosts[3]*old_u0,2))/(1-pow(tanh(eta),2))); 
+				T_and_boosts[2]=ux/new_u0;
+				T_and_boosts[3]=uy/new_u0;
+				T_and_boosts[4]=tanh(eta);
+				//std::cout << pow(new_u0,2)-(pow(T_and_boosts[2]*new_u0,2)+pow(T_and_boosts[3]*new_u0,2)+pow(T_and_boosts[4]*new_u0,2)) << "\n";
+				computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
+			}
 		}
 	}
 
@@ -256,7 +280,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 				//dGamma(\vec{k}_L)=dGamma_0(k_rf)+(A_L)_{alpha beta} k_L^alpha k_L^beta Z(rf) 
 				curr_pos->ikt=ikt;
 				curr_pos->iphi=iphi;
-				curr_pos->ieta=ieta;
+				curr_pos->irap=ieta;
 				fill_grid(curr_pos, kR, T, kHatkHatPiOver_e_P,discSpectra);	
 
 
@@ -281,7 +305,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	double QGP_fraction(double T);
 
 	//
-	int ieta=curr_pos->ieta;
+	int ieta=curr_pos->irap;
 	int iphi=curr_pos->iphi;
 	int ikt=curr_pos->ikt;
 	double tmpRate;
@@ -341,7 +365,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 }
 
-void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
+void update_position_info(int line, struct phaseSpace_pos *curr_pos) {
 
 	//We don't need x/y/eta position, so we don't compute it
 	//curr_pos->x=-1;
@@ -349,13 +373,16 @@ void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
 	//curr_pos->eta=-1;
 
 	//There is (cellNb_x*cellNb_y*cellNb_eta) line per timestep
-	if (((line-1)%(cellNb_x*cellNb_y*cellNb_eta) == 0)&&(line != 1)) {
+	if ((line)%(cellNb_x*cellNb_y*cellNb_eta) == 0) {
 
 		std::cout << "Done with time slice " << curr_pos->tau << " fm^-1\n";
 
 		//Update tau	
 		curr_pos->tau+=CONST_effective_dTau;
-
+		curr_pos->itau+=1;
+		curr_pos->ix=1;
+		curr_pos->iy=1;
+		curr_pos->ieta=1;
 
 		/*
 		printf("New tau=%d at line %i\n",curr_pos->tau,line);
@@ -369,6 +396,18 @@ void infer_position_info(int line, struct phaseSpace_pos *curr_pos) {
 			curr_pos->newiTau=0;
 		}
 		*/
+	}
+	else if ((line)%(cellNb_x*cellNb_y)==0) {
+		curr_pos->ieta+=1;
+		curr_pos->ix=1;
+		curr_pos->iy=1;
+	}
+	else if ((line)%(cellNb_x)==0) {
+		curr_pos->iy+=1;
+		curr_pos->ix=1;
+	}
+	else {
+		curr_pos->ix+=1;
 	}
 
 }
