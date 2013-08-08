@@ -166,6 +166,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 	double kL, kLx, kLy, kLz;
 	double kR, kHatkHatPiOver_e_P;
 	double coshEta, sinhEta, cosPhi, sinPhi, invCoshEta;
+	double tr_check;
 	//double stPosition[4];
 
 	//Assign those to local variables for convenience
@@ -212,7 +213,12 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 					//kkPiOverEta=A00 + 1/cosh(eta)*( 2*(A01*k1+A02*k2+A03*k3) + 1/cosheta*() )
 					//kkPiOverEta=A00 + 1/cosh(eta)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(eta)^2)+2/cosh(eta)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(eta)+1/cosh(eta)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(eta)+A23*sin(phi)*sinh(eta)))
 					//kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
-					kHatkHatPiOver_e_P=visc_info[0] + invCoshEta*invCoshEta*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( visc_info[1]*cosPhi + visc_info[2]*sinPhi + visc_info[3]*sinhEta + invCoshEta*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhEta + visc_info[8]*sinPhi*sinhEta));
+					kHatkHatPiOver_e_P=visc_info[0] + invCoshEta*invCoshEta*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*sinhEta + invCoshEta*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhEta + visc_info[8]*sinPhi*sinhEta));
+
+					tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9] > 1e-3);
+					if (tr_check > 1e-5) {
+						std::cout << "Warning: Large deviation from tracelessness (" << tr_check << ")!\n";
+					}
 					
 					//Akk=(*shear_info)+invCoshEta( (*shear_info+4)*cosPhi*cosPhi);
 				}
