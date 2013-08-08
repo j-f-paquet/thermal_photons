@@ -188,7 +188,7 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 			for(int j=0;j<CONST_nb_steps_eta_integration;j++) {
 				eta=-1*CONST_max_eta_integration+2*CONST_max_eta_integration*j/(CONST_nb_steps_eta_integration-1);
 				//new_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-tanh(eta)*tanh(eta));
-				new_u0=sqrt((1+pow(T_and_boosts[2]*old_u0,2)+pow(T_and_boosts[3]*old_u0,2))/(1-pow(tanh(eta),2))); 
+				new_u0=sqrt((1+ux*ux+uy*uy)/(1-pow(tanh(eta),2))); 
 				T_and_boosts[2]=ux/new_u0;
 				T_and_boosts[3]=uy/new_u0;
 				T_and_boosts[4]=tanh(eta);
