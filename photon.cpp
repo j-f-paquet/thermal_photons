@@ -52,7 +52,7 @@ void photon_prod() {
 
 	//Open spacetime grid file
 	openFileRead(CONST_binaryMode, stGridFile, (void **) &stFile);
-	if (CONST_with_viscosity) openFileRead(CONST_binaryMode, stGridFile, (void **) &viscFile);
+	if (CONST_with_viscosity) openFileRead(CONST_binaryMode, viscosityFile, (void **) &viscFile);
 
 	//Read the first line of the spacetime grid
 	read_T_flag=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
@@ -71,6 +71,11 @@ void photon_prod() {
 		read_T_flag=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
 		if (CONST_with_viscosity) read_visc_flag=viscRead(CONST_binaryMode, viscFile, visc_info);
 		line+=1;
+
+	}
+
+	if ((!std::feof(stFile))||((CONST_with_viscosity)&&(!std::feof(viscFile)))) {
+		std::cout << "!!!!!!!!!!!!!!! Warning !!!!!!!!!!!!!!!!!! Stopped reading the evolution files before the end of the file!\n";	
 	}
 
 	//Close spacetime grid file
