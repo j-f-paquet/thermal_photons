@@ -215,7 +215,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 					//kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
 					kHatkHatPiOver_e_P=visc_info[0] + invCoshEta*invCoshEta*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*sinhEta + invCoshEta*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhEta + visc_info[8]*sinPhi*sinhEta));
 
-					tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9] > 1e-3);
+					tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9]);
 					if (tr_check > 1e-5) {
 						std::cout << "Warning: Large deviation from tracelessness (" << tr_check << ")!\n";
 					}
