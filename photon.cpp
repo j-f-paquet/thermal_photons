@@ -321,6 +321,15 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	int ikt=curr_pos->ikt;
 	double tmpRate;
 	double (*local_rate)(double, double, double);
+	double tmp_cellsize_eta;
+
+	//Size of cell in eta different if integrating 2+1D or 3+1D
+	if (CONST_boost_invariant) {
+		tmp_cellsize_eta=CONST_max_eta_integration/CONST_nb_steps_eta_integration;
+	}
+	else {
+		tmp_cellsize_eta=CONST_cellsize_Eta;
+	}
 
 	//Loop over rates
 	for(unsigned int iRate=0; iRate<CONST_N_rates;iRate++) {
@@ -360,8 +369,8 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 		//tmpRate*=QGP_fraction(T);
 
 		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
-		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau;
-		
+		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*tmp_cellsize_eta*CONST_effective_dTau*curr_pos->tau;
+
 		//Fill value
 		discSpectra[ieta][iphi][ikt][1][iRate]+=tmpRate;
 
