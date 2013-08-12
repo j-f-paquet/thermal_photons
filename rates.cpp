@@ -2,6 +2,57 @@
 
 /***** Rates *****/
 
+/*
+Rates:
+1: double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2);
+2: double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2);
+3: double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+4: double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+5: rate_hg_ideal_Turbide_fit
+6: rate_qgp_ideal_LO_AMYfit
+*/
+double get_photon_rate(int selector, double (**local_rate)(double, double, double), std::string * rate_name) {
+
+	double rate_qgp_ideal_born_AMYfit(double, double, double);
+	double rate_qgp_ideal_born_KLS(double, double, double);
+	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_ideal_LO_AMYfit(double, double, double);
+
+	//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
+	switch(selector) {
+		case 1:
+			//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
+			*local_rate = rate_qgp_ideal_born_AMYfit;
+			*rate_name= "rate_qgp_ideal_born_AMYfit";
+			break;
+		case 2: 
+			*local_rate = rate_qgp_ideal_born_KLS;
+			*rate_name="rate_qgp_ideal_born_KLS";
+			break;
+		case 3: 
+			*local_rate = rate_qgp_ideal_born_JF_sqrtg;
+			*rate_name="rate_qgp_ideal_born_JF_sqrtg";
+			break;
+		case 4:
+			*local_rate = rate_qgp_viscous_only_born_JF_sqrtg;
+			*rate_name="rate_qgp_viscous_only_born_JF_sqrtg";
+			break;
+		case 5:
+			*local_rate = rate_hg_ideal_Turbide_fit;
+			*rate_name="rate_hg_ideal_Turbide_fit";
+			break;
+		case 6:
+			*local_rate = rate_qgp_ideal_LO_AMYfit;
+			*rate_name="rate_qgp_ideal_LO_AMYfit";
+			break;
+	}
+
+
+
+}
+
 //Template for rate E d^3 Gamma/d k^3
 //last argument can be dummy in ideal case
 //double rate_template(double kOverT, double T, double kkPiOver_e_P_k2) {
@@ -11,6 +62,7 @@
 //	//Return it
 //
 //}
+
 
 
 double QGP_fraction(double T) {
@@ -285,3 +337,6 @@ double HadronicPhase(double E, double T, int process)
 	}
 	return (A2 + A3 + A4 + A5 + A6 + A7 + A8 + A9);
 }
+
+
+
