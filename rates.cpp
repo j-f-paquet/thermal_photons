@@ -63,12 +63,16 @@ int index_from_kOverT(double kOverT, int size) {
 	return floor(sqrt(kOverT*size*size*1.0/80.0));
 }
 
-double temp_from_index(int i, int size) {
-	return 1.0*i*i*1.0/(size*size);
+double temp_from_index(int i, int size, int rate_no) {
+	const double t_min=accel_table_min_temperature[CONST_rates_to_use[rate_no]-1];
+	const double t_max=accel_table_max_temperature[CONST_rates_to_use[rate_no]-1];
+	return t_min+(t_max-t_min)*i*i*1.0/(size*size);
 }
 
-int index_from_temp(double temp, int size) {
-	return floor(sqrt(temp*size*size*1.0/1.0));
+int index_from_temp(double temp, int size, int rate_no) {
+	const double t_min=accel_table_min_temperature[CONST_rates_to_use[rate_no]-1];
+	const double t_max=accel_table_max_temperature[CONST_rates_to_use[rate_no]-1];
+	return floor(sqrt((temp-t_min)*size*size*1.0/(t_max-t_min)));
 }
 
 double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no) {
@@ -79,7 +83,7 @@ double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no) {
 	const int size_y=accel_table_sample_y[CONST_rates_to_use[rate_no]-1];
 
 	int a1=index_from_kOverT(kOverT,size_x);
-	int b1=index_from_temp(T,size_y);		
+	int b1=index_from_temp(T,size_y,rate_no);		
 
 	//Must decide what to do when the requested value is outside the table's range
 	if ((a1+1>=size_x)||(b1+1>=size_y)||(a1<0)||(b1<0)) {
@@ -94,11 +98,37 @@ double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no) {
 
 		double x1=kOverT_from_index(a1,size_x);
 		double x2=kOverT_from_index(a1+1,size_x);
-		double y1=temp_from_index(b1,size_y);
-		double y2=temp_from_index(b1+1,size_y);
+		double y1=temp_from_index(b1,size_y,rate_no);
+		double y2=temp_from_index(b1+1,size_y,rate_no);
 
-		res=(fx1y1*(x2-kOverT)*(y2-T)+fx2y1*(kOverT-x1)*(y2-T)+fx1y2*(x2-kOverT)*(T-y1)+fx2y2*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1));
+		//Robust but inefficient
+		if (fx1y1>0&&fx2y1>0&&fx1y2>0&&fx2y2>0) {
 
+			//Exact version
+			double log11=log(fx1y1);
+			double log12=log(fx1y2);
+			double log21=log(fx2y1);
+			double log22=log(fx2y2);
+
+			//Slighly faster version
+			//Log[a + x] = Log[a] + x/a - x^2/(2 a^2) + x^3/(3 a^3) + ...
+			//PadeApproximant[Log[ap + R ap], {R, 0, 2}]=(Log[ap]+R (1+Log[ap])+1/6 R^2 (3+Log[ap]))/(1+R+R^2/6)
+			//double log11=log(fx1y1);
+			//double ratio=(fx1y2-fx1y1)/fx1y1;
+			//double log12=log11+ratio-ratio*ratio*0.5+1./3.*ratio*ratio*ratio;
+			//ratio=(fx2y1-fx1y1)/fx1y1;
+			//double log21=log11+ratio-ratio*ratio*0.5+1./3.*ratio*ratio*ratio;
+			//ratio=(fx2y2-fx1y1)/fx1y1;
+			//double log22=log11+ratio-ratio*ratio*0.5+1./3.*ratio*ratio*ratio;
+		
+			res=exp((log11*(x2-kOverT)*(y2-T)+log21*(kOverT-x1)*(y2-T)+log12*(x2-kOverT)*(T-y1)+log22*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1)));
+			//res=exp((fx1y1*(x2-kOverT)*(y2-T)+fx2y1*(kOverT-x1)*(y2-T)+fx1y2*(x2-kOverT)*(T-y1)+fx2y2*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1)));
+			//res=exp((log(fx1y1)*(x2-kOverT)*(y2-T)+log(fx2y1)*(kOverT-x1)*(y2-T)+log(fx1y2)*(x2-kOverT)*(T-y1)+log(fx2y2)*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1)));
+
+		}
+		else {
+			res=(fx1y1*(x2-kOverT)*(y2-T)+fx2y1*(kOverT-x1)*(y2-T)+fx1y2*(x2-kOverT)*(T-y1)+fx2y2*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1));
+		}
 	}
 	
 	return res;
