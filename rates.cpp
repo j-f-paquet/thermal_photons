@@ -11,7 +11,9 @@ Rates:
 5: rate_hg_ideal_Turbide_fit
 6: rate_qgp_ideal_LO_AMYfit
 */
-double get_photon_rate(int selector, double (**local_rate)(double, double, double), std::string * rate_name) {
+
+
+double get_photon_rate(int selector, double (**local_rate)(double, double, double)) {
 
 	double rate_qgp_ideal_born_AMYfit(double, double, double);
 	double rate_qgp_ideal_born_KLS(double, double, double);
@@ -25,31 +27,81 @@ double get_photon_rate(int selector, double (**local_rate)(double, double, doubl
 		case 1:
 			//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
 			*local_rate = rate_qgp_ideal_born_AMYfit;
-			*rate_name= "rate_qgp_ideal_born_AMYfit";
+//			*rate_name= "rate_qgp_ideal_born_AMYfit";
 			break;
 		case 2: 
 			*local_rate = rate_qgp_ideal_born_KLS;
-			*rate_name="rate_qgp_ideal_born_KLS";
+//			*rate_name="rate_qgp_ideal_born_KLS";
 			break;
 		case 3: 
 			*local_rate = rate_qgp_ideal_born_JF_sqrtg;
-			*rate_name="rate_qgp_ideal_born_JF_sqrtg";
+//			*rate_name="rate_qgp_ideal_born_JF_sqrtg";
 			break;
 		case 4:
 			*local_rate = rate_qgp_viscous_only_born_JF_sqrtg;
-			*rate_name="rate_qgp_viscous_only_born_JF_sqrtg";
+//			*rate_name="rate_qgp_viscous_only_born_JF_sqrtg";
 			break;
 		case 5:
 			*local_rate = rate_hg_ideal_Turbide_fit;
-			*rate_name="rate_hg_ideal_Turbide_fit";
+//			*rate_name="rate_hg_ideal_Turbide_fit";
 			break;
 		case 6:
 			*local_rate = rate_qgp_ideal_LO_AMYfit;
-			*rate_name="rate_qgp_ideal_LO_AMYfit";
+//			*rate_name="rate_qgp_ideal_LO_AMYfit";
 			break;
 	}
 
 
+
+}
+
+double kOverT_from_index(int i, int size) {
+	return 80*i*i*1.0/(size*size);
+}
+
+int index_from_kOverT(double kOverT, int size) {
+	return floor(sqrt(kOverT*size*size*1.0/80.0));
+}
+
+double temp_from_index(int i, int size) {
+	return 1.0*i*i*1.0/(size*size);
+}
+
+int index_from_temp(double temp, int size) {
+	return floor(sqrt(temp*size*size*1.0/1.0));
+}
+
+double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no) {
+
+	double res;
+
+	const int size_x=accel_table_sample_x[CONST_rates_to_use[rate_no]-1];
+	const int size_y=accel_table_sample_y[CONST_rates_to_use[rate_no]-1];
+
+	int a1=index_from_kOverT(kOverT,size_x);
+	int b1=index_from_temp(T,size_y);		
+
+	//Must decide what to do when the requested value is outside the table's range
+	if ((a1+1>=size_x)||(b1+1>=size_y)||(a1<0)||(b1<0)) {
+		res=0.0;
+	}
+	else {
+
+		double fx1y1=CONST_rate_tables.tabulated_rates[rate_no][b1][a1];
+		double fx2y1=CONST_rate_tables.tabulated_rates[rate_no][b1][a1+1];
+		double fx1y2=CONST_rate_tables.tabulated_rates[rate_no][b1+1][a1];
+		double fx2y2=CONST_rate_tables.tabulated_rates[rate_no][b1+1][a1+1];
+
+		double x1=kOverT_from_index(a1,size_x);
+		double x2=kOverT_from_index(a1+1,size_x);
+		double y1=temp_from_index(b1,size_y);
+		double y2=temp_from_index(b1+1,size_y);
+
+		res=(fx1y1*(x2-kOverT)*(y2-T)+fx2y1*(kOverT-x1)*(y2-T)+fx1y2*(x2-kOverT)*(T-y1)+fx2y2*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1));
+
+	}
+	
+	return res;
 
 }
 

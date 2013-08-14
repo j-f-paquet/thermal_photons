@@ -261,7 +261,8 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 	//
 	double QGP_fraction(double T);
-	double get_photon_rate(int selector, double (**local_rate)(double, double, double), std::string * rate_name);
+	double get_photon_rate(int selector, double (**local_rate)(double, double, double));
+	double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no);
 
 	//
 	int ieta=curr_pos->ieta;
@@ -270,13 +271,12 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	double tmpRate;
 	double (*local_rate)(double, double, double);
 	void * tmp_ptr;
-	std::string dummy_str;
 
 	//Loop over rates
 	for(unsigned int iRate=0; iRate<CONST_N_rates;iRate++) {
 	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_rateList.size()];
 
-		get_photon_rate(CONST_rates_to_use[iRate], &local_rate, &dummy_str);
+		get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
 
 //		//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
 //		switch(CONST_rates_to_use[iRate]) {
@@ -303,7 +303,9 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 //		//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_KLS;
 
 		//tmpRate=CONST_rateList[iRate].c_str()(0.0,0.0,0.0);
-		tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
+
+		//tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
+		tmpRate=get_photon_rate_accel(kR/T, T, kHatkHatPiOver_e_P, iRate);
 		//tmpRate=kR*(1.0+cos(kR*(2.0)*iphi*CONST_delPhi));
 
 		//if (T>CONST_pure_HG_T) std::cout << T<<"\t"<<kR/T<<"\t"<<CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau<<"\t"<<QGP_fraction(T)<<"\n";
@@ -378,18 +380,12 @@ void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3
 //Output the phi-integrated, rapidity-averaged-around-0 yield as a function of pT
 void compute_midrapidity_yield_and_vn(int rate_no, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 
-	//
-	double get_photon_rate(int selector, double (**local_rate)(double, double, double), std::string * rate_name);
-
 	double kt, eta, phi, yFac, rap_interval;
 	double yield, vn[CONST_FourierNb];
 	int iEtamin=0, iEtamax;
 	bool exact_midrap=false, bad_rap_discret = false;
 	double (*local_rate)(double, double, double);
-	std::string rate_name;
-
-	//Retrieve the rates name
-	get_photon_rate(CONST_rates_to_use[rate_no],&local_rate,&rate_name);
+	std::string rate_name = CONST_available_rate[CONST_rates_to_use[rate_no]-1];
 
 	//Set output file name
 	std::stringstream tmpStr;

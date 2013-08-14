@@ -78,6 +78,7 @@ const double CONST_delKt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
 //const int miaw[] = {1,2,3,4};
 //const char char_rateList[4][100] = {"01", "02", "03", "04"};
 //std::vector<std::string> v(char_rateList, char_rateList + 4);
+const char CONST_available_rate[][100]={"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg", "rate_hg_ideal_Turbide_fit","rate_qgp_ideal_LO_AMYfit"};
 /*
 Rates:
 1: double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2);
@@ -139,5 +140,84 @@ struct phaseSpace_pos {
 	bool newiTau;
 
 };
+
+//const int rate_accel_sample = 1000;
+//const int CONST_hg_rates_sampling_E = 1000;
+//const int CONST_hg_rates_sampling_T = 1000;
+
+//void load_table(struct rate_accel * accel) {
+//
+//	for(int i=0;i<CONST_N_rates;i++) {
+//
+//	}
+//
+//}
+
+//const int accel_table_dim[] = {1,1,1,1,2,1};
+const bool CONST_use_accel_rates[] = {0,0,0,0,0,1};
+const int accel_table_sample_x[] = {2000,2000,100,100,2000,2000};
+//const int accel_table_sample_y[] = {1,1,1,1,1000,1};
+const int accel_table_sample_y[] = {2000,2000,100,100,2000,2000};
+const double accel_table_min_temperature[]={0.17,0.17,0.17,0.17,0.07,0.17};
+const double accel_table_max_temperature[]={2.0,2.0,2.0,2.0,.3,2.0};
+struct rate_accel {
+
+	//gsl_interp * rate_gsl_interp[CONST_N_rates];
+	//gsl_interp_accel * rate_gsl_interp_accel[CONST_N_rates];
+	//double ** x_sample;
+	//double ** y_sample;
+	double *** tabulated_rates;
+
+	rate_accel() {
+
+		double get_photon_rate(int selector, double (**local_rate)(double, double, double));
+		double kOverT_from_index(int i, int size);
+		double temp_from_index(int i, int size);
+
+		//x_sample = new double * [CONST_N_rates];
+		//y_sample = new double * [CONST_N_rates];
+		tabulated_rates = new double ** [CONST_N_rates];
+
+		double x,y;
+		int tmp_sample_x,tmp_sample_y;
+		double (*local_rate)(double, double, double);
+
+		for(int rate_no=0;rate_no<CONST_N_rates;rate_no++) {
+			get_photon_rate(CONST_rates_to_use[rate_no], &local_rate);
+			//for(int dim=0;dim<accel_table_dim[i];dim++) {
+			tmp_sample_x=accel_table_sample_x[CONST_rates_to_use[rate_no]-1];
+	//		x_sample[rate_no] = new double [tmp_sample_x];
+	//		//tabulated_rates[rate_no] = new double * [tmp_sample_x];
+	//		for(int j=0; j<tmp_sample_x;j++) {
+	//			x=kOverT_from_index(j,tmp_sample_x);
+	//			//x=100*j*j*1.0/(tmp_sample_x*tmp_sample_x);
+	//			x_sample[rate_no][j]=x;
+	//		//	tabulated_rates[i][j]=0.0;
+	//		}
+			tmp_sample_y=accel_table_sample_y[CONST_rates_to_use[rate_no]-1];
+	//		y_sample[rate_no] = new double [tmp_sample_y];
+	//		for(int k=0; k<tmp_sample_y;k++) {
+	//			y=temp_from_index(k,tmp_sample_y);
+	//			y_sample[rate_no][k]=y;
+	//		//	tabulated_rates[i][j]=0.0;
+	//		}
+			//}
+			tabulated_rates[rate_no] = new double * [tmp_sample_y];	
+			for(int k=0; k<tmp_sample_y;k++) {
+				tabulated_rates[rate_no][k] = new double [tmp_sample_x];	
+				for(int j=0; j<tmp_sample_x;j++) {
+					tabulated_rates[rate_no][k][j]=(*local_rate)(kOverT_from_index(j,tmp_sample_x),temp_from_index(k,tmp_sample_y),0.0);	
+				}
+			}
+		}
+
+
+	//double gsl_interp_eval (const gsl_interp * interp, const double xa[], const double ya[], double x, gsl_interp_accel * acc)
+
+	}
+
+};
+
+const struct rate_accel CONST_rate_tables;
 
 #endif
