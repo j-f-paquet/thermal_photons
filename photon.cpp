@@ -325,7 +325,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 	//Size of cell in eta different if integrating 2+1D or 3+1D
 	if (CONST_boost_invariant) {
-		tmp_cellsize_eta=CONST_max_eta_integration/CONST_nb_steps_eta_integration;
+		tmp_cellsize_eta=2*CONST_max_eta_integration/CONST_nb_steps_eta_integration;
 	}
 	else {
 		tmp_cellsize_eta=CONST_cellsize_Eta;
