@@ -82,6 +82,7 @@ const double CONST_delKt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
 //const int miaw[] = {1,2,3,4};
 //const char char_rateList[4][100] = {"01", "02", "03", "04"};
 //std::vector<std::string> v(char_rateList, char_rateList + 4);
+const char CONST_available_rate[][100]={"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg", "rate_hg_ideal_Turbide_fit","rate_qgp_ideal_LO_AMYfit"};
 /*
 Rates:
 1: double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2);
@@ -95,10 +96,10 @@ const int CONST_rates_to_use[] = {1,2,5,6};
 //const int CONST_rates_to_use[] = {1,2,3,4,5,6};
 const int CONST_N_rates = sizeof(CONST_rates_to_use)/sizeof(int);
 //
-const char char_standard_rateList[][100] = {"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_hg_ideal_Turbide_fit","rate_qgp_ideal_LO_AMYfit"};
+//const char char_standard_rateList[][100] = {"rate_qgp_ideal_born_AMYfit"};
 //const char char_standard_rateList[][100] = {"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg","rate_hg_ideal_Turbide_fit","rate_qgp_ideal_LO_AMYfit"};
-const int CONST_N_standard_rates=int(sizeof(char_standard_rateList)/sizeof(char)/100.);
-const std::vector<std::string> CONST_rate_names(char_standard_rateList, char_standard_rateList + CONST_N_standard_rates);
+//const int CONST_N_standard_rates=int(sizeof(char_standard_rateList)/sizeof(char)/100.);
+//const std::vector<std::string> CONST_rate_names(char_standard_rateList, char_standard_rateList + CONST_N_standard_rates);
 
 
 //Mid-rapidity cut: the midrapidity result will be an average over approximatively -midRapCut to midRapCut
@@ -144,5 +145,45 @@ struct phaseSpace_pos {
 	//bool newiTau;
 
 };
+
+const bool CONST_use_accel_rates[] = {0,0,0,0,0,1};
+const int accel_table_sample_x[] = {2000,2000,2000,2000,500,2000};
+const int accel_table_sample_y[] = {2000,2000,2000,2000,250,2000};
+const double accel_table_min_temperature[]={CONST_pure_HG_T,CONST_pure_HG_T,CONST_pure_HG_T,CONST_pure_HG_T,CONST_freezeout_T,CONST_pure_HG_T};
+const double accel_table_max_temperature[]={2.0,2.0,2.0,2.0,CONST_pure_QGP_T,2.0};
+struct rate_accel {
+
+	double *** tabulated_rates;
+
+	rate_accel() {
+
+		double get_photon_rate(int selector, double (**local_rate)(double, double, double));
+		double kOverT_from_index(int i, int size);
+		double temp_from_index(int i, int size, int rate_no);
+
+		tabulated_rates = new double ** [CONST_N_rates];
+
+		double x,y;
+		int tmp_sample_x,tmp_sample_y;
+		double (*local_rate)(double, double, double);
+
+		for(int rate_no=0;rate_no<CONST_N_rates;rate_no++) {
+			get_photon_rate(CONST_rates_to_use[rate_no], &local_rate);
+			tmp_sample_x=accel_table_sample_x[CONST_rates_to_use[rate_no]-1];
+			tmp_sample_y=accel_table_sample_y[CONST_rates_to_use[rate_no]-1];
+			tabulated_rates[rate_no] = new double * [tmp_sample_y];	
+			for(int k=0; k<tmp_sample_y;k++) {
+				tabulated_rates[rate_no][k] = new double [tmp_sample_x];	
+				for(int j=0; j<tmp_sample_x;j++) {
+					tabulated_rates[rate_no][k][j]=(*local_rate)(kOverT_from_index(j,tmp_sample_x),temp_from_index(k,tmp_sample_y,rate_no),0.0);	
+				}
+			}
+		}
+
+	}
+
+};
+
+const struct rate_accel CONST_rate_tables;
 
 #endif

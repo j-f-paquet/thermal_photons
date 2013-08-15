@@ -2,6 +2,139 @@
 
 /***** Rates *****/
 
+/*
+Rates:
+1: double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2);
+2: double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2);
+3: double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+4: double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+5: rate_hg_ideal_Turbide_fit
+6: rate_qgp_ideal_LO_AMYfit
+*/
+
+
+double get_photon_rate(int selector, double (**local_rate)(double, double, double)) {
+
+	double rate_qgp_ideal_born_AMYfit(double, double, double);
+	double rate_qgp_ideal_born_KLS(double, double, double);
+	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_ideal_LO_AMYfit(double, double, double);
+
+	//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
+	switch(selector) {
+		case 1:
+			//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
+			*local_rate = rate_qgp_ideal_born_AMYfit;
+//			*rate_name= "rate_qgp_ideal_born_AMYfit";
+			break;
+		case 2: 
+			*local_rate = rate_qgp_ideal_born_KLS;
+//			*rate_name="rate_qgp_ideal_born_KLS";
+			break;
+		case 3: 
+			*local_rate = rate_qgp_ideal_born_JF_sqrtg;
+//			*rate_name="rate_qgp_ideal_born_JF_sqrtg";
+			break;
+		case 4:
+			*local_rate = rate_qgp_viscous_only_born_JF_sqrtg;
+//			*rate_name="rate_qgp_viscous_only_born_JF_sqrtg";
+			break;
+		case 5:
+			*local_rate = rate_hg_ideal_Turbide_fit;
+//			*rate_name="rate_hg_ideal_Turbide_fit";
+			break;
+		case 6:
+			*local_rate = rate_qgp_ideal_LO_AMYfit;
+//			*rate_name="rate_qgp_ideal_LO_AMYfit";
+			break;
+	}
+
+
+
+}
+
+double kOverT_from_index(int i, int size) {
+	return 80*i*i*1.0/(size*size);
+}
+
+int index_from_kOverT(double kOverT, int size) {
+	return floor(sqrt(kOverT*size*size*1.0/80.0));
+}
+
+double temp_from_index(int i, int size, int rate_no) {
+	const double t_min=accel_table_min_temperature[CONST_rates_to_use[rate_no]-1];
+	const double t_max=accel_table_max_temperature[CONST_rates_to_use[rate_no]-1];
+	return t_min+(t_max-t_min)*i*i*1.0/(size*size);
+}
+
+int index_from_temp(double temp, int size, int rate_no) {
+	const double t_min=accel_table_min_temperature[CONST_rates_to_use[rate_no]-1];
+	const double t_max=accel_table_max_temperature[CONST_rates_to_use[rate_no]-1];
+	return floor(sqrt((temp-t_min)*size*size*1.0/(t_max-t_min)));
+}
+
+double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no) {
+
+	double res;
+
+	const int size_x=accel_table_sample_x[CONST_rates_to_use[rate_no]-1];
+	const int size_y=accel_table_sample_y[CONST_rates_to_use[rate_no]-1];
+
+	int a1=index_from_kOverT(kOverT,size_x);
+	int b1=index_from_temp(T,size_y,rate_no);		
+
+	//Must decide what to do when the requested value is outside the table's range
+	if ((a1+1>=size_x)||(b1+1>=size_y)||(a1<0)||(b1<0)) {
+		res=0.0;
+	}
+	else {
+
+		double fx1y1=CONST_rate_tables.tabulated_rates[rate_no][b1][a1];
+		double fx2y1=CONST_rate_tables.tabulated_rates[rate_no][b1][a1+1];
+		double fx1y2=CONST_rate_tables.tabulated_rates[rate_no][b1+1][a1];
+		double fx2y2=CONST_rate_tables.tabulated_rates[rate_no][b1+1][a1+1];
+
+		double x1=kOverT_from_index(a1,size_x);
+		double x2=kOverT_from_index(a1+1,size_x);
+		double y1=temp_from_index(b1,size_y,rate_no);
+		double y2=temp_from_index(b1+1,size_y,rate_no);
+
+		//Robust but inefficient
+		if (fx1y1>0&&fx2y1>0&&fx1y2>0&&fx2y2>0) {
+
+			//Exact version
+			double log11=log(fx1y1);
+			double log12=log(fx1y2);
+			double log21=log(fx2y1);
+			double log22=log(fx2y2);
+
+			//Slighly faster version
+			//Log[a + x] = Log[a] + x/a - x^2/(2 a^2) + x^3/(3 a^3) + ...
+			//PadeApproximant[Log[ap + R ap], {R, 0, 2}]=(Log[ap]+R (1+Log[ap])+1/6 R^2 (3+Log[ap]))/(1+R+R^2/6)
+			//double log11=log(fx1y1);
+			//double ratio=(fx1y2-fx1y1)/fx1y1;
+			//double log12=log11+ratio-ratio*ratio*0.5+1./3.*ratio*ratio*ratio;
+			//ratio=(fx2y1-fx1y1)/fx1y1;
+			//double log21=log11+ratio-ratio*ratio*0.5+1./3.*ratio*ratio*ratio;
+			//ratio=(fx2y2-fx1y1)/fx1y1;
+			//double log22=log11+ratio-ratio*ratio*0.5+1./3.*ratio*ratio*ratio;
+		
+			res=exp((log11*(x2-kOverT)*(y2-T)+log21*(kOverT-x1)*(y2-T)+log12*(x2-kOverT)*(T-y1)+log22*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1)));
+			//res=exp((fx1y1*(x2-kOverT)*(y2-T)+fx2y1*(kOverT-x1)*(y2-T)+fx1y2*(x2-kOverT)*(T-y1)+fx2y2*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1)));
+			//res=exp((log(fx1y1)*(x2-kOverT)*(y2-T)+log(fx2y1)*(kOverT-x1)*(y2-T)+log(fx1y2)*(x2-kOverT)*(T-y1)+log(fx2y2)*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1)));
+
+		}
+		else {
+			res=(fx1y1*(x2-kOverT)*(y2-T)+fx2y1*(kOverT-x1)*(y2-T)+fx1y2*(x2-kOverT)*(T-y1)+fx2y2*(kOverT-x1)*(T-y1))/((x2-x1)*(y2-y1));
+		}
+	}
+	
+	return res;
+
+}
+
 //Template for rate E d^3 Gamma/d k^3
 //last argument can be dummy in ideal case
 //double rate_template(double kOverT, double T, double kkPiOver_e_P_k2) {
@@ -11,6 +144,7 @@
 //	//Return it
 //
 //}
+
 
 
 double QGP_fraction(double T) {
@@ -285,3 +419,6 @@ double HadronicPhase(double E, double T, int process)
 	}
 	return (A2 + A3 + A4 + A5 + A6 + A7 + A8 + A9);
 }
+
+
+
