@@ -169,7 +169,7 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 		computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
 	}
 	else {
-		const int eta_slice_choice=cellNb_eta/2;
+		const int eta_slice_choice=cellNb_eta/2+1;
 		//Integrate only over 1 slice in eta
 		if (eta_slice_choice == curr_pos->ieta) {
 			double eta, eta_slice;
@@ -192,6 +192,9 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 				T_and_boosts[2]=ux/new_u0;
 				T_and_boosts[3]=uy/new_u0;
 				T_and_boosts[4]=tanh(eta);
+
+				curr_pos->eta=eta;
+
 				//std::cout << pow(new_u0,2)-(pow(T_and_boosts[2]*new_u0,2)+pow(T_and_boosts[3]*new_u0,2)+pow(T_and_boosts[4]*new_u0,2)) << "\n";
 				computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
 			}
@@ -257,10 +260,28 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 					//shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
 					//*shear_info+: 0   1   2   3   4   5   6   7   8   9
 					//\hat{K}=(1,cos(phi)/cosh(eta),sin(phi)/cosh(eta),sinh(eta)/cosh(eta))
-					//kkPiOverEta=A00 + 1/cosh(eta)*( 2*(A01*k1+A02*k2+A03*k3) + 1/cosheta*() )
-					//kkPiOverEta=A00 + 1/cosh(eta)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(eta)^2)+2/cosh(eta)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(eta)+1/cosh(eta)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(eta)+A23*sin(phi)*sinh(eta)))
-					//kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
-					kHatkHatPiOver_e_P=visc_info[0] + invCoshEta*invCoshEta*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*sinhEta + invCoshEta*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhEta + visc_info[8]*sinPhi*sinhEta));
+					if (!CONST_boost_invariant) {
+						//kkPiOverEta=A00 + 1/cosh(eta)*( 2*(A01*k1+A02*k2+A03*k3) + 1/cosheta*() )
+						//kkPiOverEta=A00 + 1/cosh(eta)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(eta)^2)+2/cosh(eta)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(eta)+1/cosh(eta)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(eta)+A23*sin(phi)*sinh(eta)))
+						//kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
+						kHatkHatPiOver_e_P=visc_info[0] + invCoshEta*invCoshEta*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhEta*sinhEta) + 2.0*invCoshEta*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*sinhEta + invCoshEta*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhEta + visc_info[8]*sinPhi*sinhEta));
+					}
+					//In the boost-invariant case, \Pi^\mu\nu is the value a eta=0
+					//k_\mu k\nu \Pi^\mu\nu must be calculed correctly
+					else {
+						//K=(kt cosh(y), kt cos(phi), kt sin(phi), kt sinh(y))
+						//k=kt*cosh(eta)
+						//K boosted from rapidity y to rapidity eta:
+						//K=(kt cosh(y-eta), kt cos(phi), kt sin(phi), kt sinh(y-eta))
+						//k boosted = kt*cosh(y-eta)
+						//\hat{K}_boosted=(1,cos(phi)/cosh(y-eta),sin(phi)/cosh(y-eta),sinh(y-eta)/cosh(y-eta))
+						//
+						double boostedCoshEta=cosh(eta-curr_pos->eta);
+						double boostedSinhEta=sinh(eta-curr_pos->eta);
+						double boostedInvCoshEta=1.0/boostedCoshEta;
+						kHatkHatPiOver_e_P=visc_info[0] + boostedInvCoshEta*boostedInvCoshEta*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*boostedSinhEta*boostedSinhEta) + 2.0*boostedInvCoshEta*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*boostedSinhEta + boostedInvCoshEta*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*boostedSinhEta + visc_info[8]*sinPhi*boostedSinhEta));
+					}
+
 
 					//tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9]);
 					//if (tr_check > 1e-5) {
