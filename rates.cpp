@@ -13,7 +13,7 @@ Rates:
 */
 
 
-double get_photon_rate(int selector, double (**local_rate)(double, double, double)) {
+void get_photon_rate(int selector, double (**local_rate)(double, double, double)) {
 
 	double rate_qgp_ideal_born_AMYfit(double, double, double);
 	double rate_qgp_ideal_born_KLS(double, double, double);

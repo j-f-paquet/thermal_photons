@@ -11,13 +11,6 @@ int main() {
 
 	//Compute photon production
 	photon_prod();
-
-//	std::cout << "Number of rates=" << CONST_rateList.size() << "\n";
-//	for(int i=0; i<CONST_rateList.size();i++) {
-//		std::cout << "rate " << i << ":" << CONST_rateList[i] << "\n";
-//	}
-
-
 }
 
 
@@ -63,9 +56,8 @@ void photon_prod() {
 	if (CONST_with_viscosity) read_visc_flag=viscRead(CONST_binaryMode, viscFile, visc_info);
 	//Loop over the rest of the file
 	while ((read_T_flag)&&((!CONST_with_viscosity)||(read_visc_flag && CONST_with_viscosity))) {
-		//Do stuff
 
-		std::cout << "Line " << line << "=Position (itau,ix,iy,ieta)=(" << curr_pos.itau << "," << curr_pos.ix << "," << curr_pos.iy << "," << curr_pos.ieta << ")\n";
+		//std::cout << "Line " << line << "=Position (itau,ix,iy,ieta)=(" << curr_pos.itau << "," << curr_pos.ix << "," << curr_pos.iy << "," << curr_pos.ieta << ")\n";
 
 		if (T_and_boosts[0]>=CONST_freezeout_T) {
 			pre_computeDescretizedSpectrum(CONST_with_viscosity, &curr_pos, T_and_boosts, visc_info, discSpectra);
@@ -176,18 +168,13 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 			double old_u0, new_u0;
 			double ux, uy;
 			eta_slice=(-cellNb_eta/2+eta_slice_choice-1)*CONST_cellsize_Eta;
-			//old_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-tanh(eta_slice)*tanh(eta_slice));
 			old_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-T_and_boosts[4]*T_and_boosts[4]);
 			ux=T_and_boosts[2]*old_u0;
 			uy=T_and_boosts[3]*old_u0;
-			//std::cout << "wtf=" << tanh(eta_slice) << "=" << T_and_boosts[4] << "\n";
-			//std::cout << old_u0 << "?=" << 1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-T_and_boosts[4]*T_and_boosts[4]) << "\n";
-			//std::cout << "ux=" << T_and_boosts[2]*old_u0 << "\n";
 
 			//Integrate in eta
 			for(int j=0;j<CONST_nb_steps_eta_integration;j++) {
 				eta=-1*CONST_max_eta_integration+2*CONST_max_eta_integration*j/(CONST_nb_steps_eta_integration-1);
-				//new_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-tanh(eta)*tanh(eta));
 				new_u0=sqrt((1+ux*ux+uy*uy)/(1-pow(tanh(eta),2))); 
 				T_and_boosts[2]=ux/new_u0;
 				T_and_boosts[3]=uy/new_u0;
@@ -195,7 +182,6 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 
 				curr_pos->eta=eta;
 
-				//std::cout << pow(new_u0,2)-(pow(T_and_boosts[2]*new_u0,2)+pow(T_and_boosts[3]*new_u0,2)+pow(T_and_boosts[4]*new_u0,2)) << "\n";
 				computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
 			}
 		}
@@ -216,7 +202,6 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 	double kL, kLx, kLy, kLz;
 	double kR, kHatkHatPiOver_e_P;
 	double coshEta, sinhEta, cosPhi, sinPhi, invCoshEta;
-	double tr_check;
 	//double stPosition[4];
 
 	//Assign those to local variables for convenience
@@ -283,7 +268,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 					}
 
 
-					//tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9]);
+					//double tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9]);
 					//if (tr_check > 1e-5) {
 					//	std::cout << "Warning: Large deviation from tracelessness (" << tr_check << ")!\n";
 					//}
@@ -329,7 +314,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 	//
 	double QGP_fraction(double T);
-	double get_photon_rate(int selector, double (**local_rate)(double, double, double));
+	void get_photon_rate(int selector, double (**local_rate)(double, double, double));
 	double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no);
 
 	//
@@ -349,42 +334,19 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	}
 
 	//Loop over rates
-	for(unsigned int iRate=0; iRate<CONST_N_rates;iRate++) {
+	for(int iRate=0; iRate<CONST_N_rates;iRate++) {
 	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_rateList.size()];
 
 		get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
 
-//		//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
-//		switch(CONST_rates_to_use[iRate]) {
-//			case 1:
-//				//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
-//				local_rate = rate_qgp_ideal_born_AMYfit;
-//				break;
-//			case 2: 
-//				local_rate = rate_qgp_ideal_born_KLS;
-//				break;
-//			case 3: 
-//				local_rate = rate_qgp_ideal_born_JF_sqrtg;
-//				break;
-//			case 4:
-//				local_rate = rate_qgp_viscous_only_born_JF_sqrtg;
-//				break;
-//			case 5:
-//				local_rate = rate_hg_ideal_Turbide_fit;
-//				break;
-//			case 6:
-//				local_rate = rate_qgp_ideal_LO_AMYfit;
-//				break;
-//		}
-//		//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_KLS;
-
-		//tmpRate=CONST_rateList[iRate].c_str()(0.0,0.0,0.0);
-
-		//tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
-		tmpRate=get_photon_rate_accel(kR/T, T, kHatkHatPiOver_e_P, iRate);
+		//Either use the fits directly or a table made from the fits
+		if (CONST_use_accel_rates[CONST_rates_to_use[iRate]]) {
+			tmpRate=get_photon_rate_accel(kR/T, T, kHatkHatPiOver_e_P, iRate);
+		}
+		else {
+			tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
+		}
 		//tmpRate=kR*(1.0+cos(kR*(2.0)*iphi*CONST_delPhi));
-
-		//if (T>CONST_pure_HG_T) std::cout << T<<"\t"<<kR/T<<"\t"<<CONST_cellsize_X*CONST_cellsize_Y*CONST_cellsize_Eta*CONST_effective_dTau*curr_pos->tau<<"\t"<<QGP_fraction(T)<<"\n";
 
 		//QGP fraction
 		//tmpRate*=QGP_fraction(T);
@@ -475,7 +437,6 @@ void compute_midrapidity_yield_and_vn(int rate_no, double discSpectra[CONST_Neta
 	double yield, vn[CONST_FourierNb];
 	int iEtamin=0, iEtamax;
 	bool exact_midrap=false, bad_rap_discret = false;
-	double (*local_rate)(double, double, double);
 	std::string rate_name = CONST_available_rate[CONST_rates_to_use[rate_no]-1];
 
 	//Set output file name
