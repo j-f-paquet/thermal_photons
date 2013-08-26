@@ -352,7 +352,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 		get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
 
 		//Either use the fits directly or a table made from the fits
-		if (CONST_use_accel_rates[CONST_rates_to_use[iRate]]) {
+		if (CONST_use_accel_rates[CONST_rates_to_use[iRate]-1]) {
 			tmpRate=get_photon_rate_accel(kR/T, T, kHatkHatPiOver_e_P, iRate);
 		}
 		else {

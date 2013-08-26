@@ -160,7 +160,7 @@ struct rate_accel {
 		double (*local_rate)(double, double, double);
 
 		for(int rate_no=0;rate_no<CONST_N_rates;rate_no++) {
-			if (!CONST_use_accel_rates[CONST_rates_to_use[rate_no]]) continue;
+			if (!CONST_use_accel_rates[CONST_rates_to_use[rate_no]-1]) continue;
 			get_photon_rate(CONST_rates_to_use[rate_no], &local_rate);
 			tmp_sample_x=accel_table_sample_x[CONST_rates_to_use[rate_no]-1];
 			tmp_sample_y=accel_table_sample_y[CONST_rates_to_use[rate_no]-1];
