@@ -49,8 +49,8 @@ const double CONST_tau0=MUSIC_tau0;
 const double CONST_effective_dTau=MUSIC_effective_dtau;
 
 const bool CONST_boost_invariant=1;
-const int CONST_nb_steps_eta_integration=100;
-const double CONST_max_eta_integration=4.0;
+const int CONST_nb_steps_eta_integration=30;
+const double CONST_max_eta_integration=3.0;
 
 //Run with viscosity or not
 const bool CONST_with_shear_viscosity=MUSIC_with_shear_viscosity; //0 for thermal, 1 for anisotropic
@@ -133,6 +133,9 @@ struct phaseSpace_pos {
 	//
 	//int iTauList;
 	//bool newiTau;
+
+	//Spacetime integration weights
+	double w_eta;
 
 };
 

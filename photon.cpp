@@ -167,20 +167,32 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 			double eta, eta_slice;
 			double old_u0, new_u0;
 			double ux, uy;
+			const int integration_step=2*int(CONST_nb_steps_eta_integration/2.0);
+			const double delta_eta = 2.0*CONST_max_eta_integration/integration_step;
 			eta_slice=(-cellNb_eta/2+eta_slice_choice-1)*CONST_cellsize_Eta;
 			old_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-T_and_boosts[4]*T_and_boosts[4]);
 			ux=T_and_boosts[2]*old_u0;
 			uy=T_and_boosts[3]*old_u0;
 
+			//Integrate in eta with Simpsons
 			//Integrate in eta
-			for(int j=0;j<CONST_nb_steps_eta_integration;j++) {
-				eta=-1*CONST_max_eta_integration+2*CONST_max_eta_integration*j/(CONST_nb_steps_eta_integration-1);
+			for(int j=0;j<=integration_step;j++) {
+				eta=-1*CONST_max_eta_integration+j*delta_eta;
 				new_u0=sqrt((1+ux*ux+uy*uy)/(1-pow(tanh(eta),2))); 
 				T_and_boosts[2]=ux/new_u0;
 				T_and_boosts[3]=uy/new_u0;
 				T_and_boosts[4]=tanh(eta);
 
 				curr_pos->eta=eta;
+				if ((0 == j)||(integration_step == j)) {
+					curr_pos->w_eta=delta_eta/3.0;
+				}
+				else if (j%2 == 0) {
+					curr_pos->w_eta=delta_eta*2.0/3.0;
+				}
+				else {
+					curr_pos->w_eta=delta_eta*4.0/3.0;
+				}
 
 				computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
 			}
@@ -327,7 +339,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 
 	//Size of cell in eta different if integrating 2+1D or 3+1D
 	if (CONST_boost_invariant) {
-		tmp_cellsize_eta=2*CONST_max_eta_integration/CONST_nb_steps_eta_integration;
+		tmp_cellsize_eta=curr_pos->w_eta;
 	}
 	else {
 		tmp_cellsize_eta=CONST_cellsize_Eta;
