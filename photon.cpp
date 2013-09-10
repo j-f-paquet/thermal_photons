@@ -5,24 +5,32 @@ int main() {
 
 
 	//Forward declaration
-	void photon_prod();
+	void photon_prod(const struct photonRate rate_list[]);
+	void init_rates(struct photonRate * currRate, int id); 
+
+	//
+	struct photonRate rate_list[CONST_N_rates];
 
 	//Grid information
 
+	//Initialise rates
+	for(int i=0;i<CONST_N_rates;i++) init_rates(&rate_list[i], CONST_rates_to_use[i]);
+
+
 	//Compute photon production
-	photon_prod();
+	photon_prod(rate_list);
 }
 
 
 //Compute photon production
-void photon_prod() {
+void photon_prod(const struct photonRate rate_list[]) {
 
 	//Forward declaration of functions
 	void openFileRead(bool binary, std::string filename, void ** pointer);
 	bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
 	bool viscRead(bool binary, void * file, float visc_info[]);
 	void update_position_info(int line, struct phaseSpace_pos *curr_pos);
-	void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
+	void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 	void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	//Variables
@@ -60,7 +68,7 @@ void photon_prod() {
 		//std::cout << "Line " << line << "=Position (itau,ix,iy,ieta)=(" << curr_pos.itau << "," << curr_pos.ix << "," << curr_pos.iy << "," << curr_pos.ieta << ")\n";
 
 		if (T_and_boosts[0]>=CONST_freezeout_T) {
-			pre_computeDescretizedSpectrum(CONST_with_viscosity, &curr_pos, T_and_boosts, visc_info, discSpectra);
+			pre_computeDescretizedSpectrum(&curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
 		}
 		//Compute (tau,x,y,eta) from line number
 		update_position_info(line,&curr_pos);
@@ -152,13 +160,13 @@ bool viscRead(bool binary, void * file, float visc_info[]) {
 }
 
 
-void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 
 	//Forward declaration
-	void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
+	void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	if (!CONST_boost_invariant) {
-		computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
+		computeDescretizedSpectrum(curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
 	}
 	else {
 		const int eta_slice_choice=cellNb_eta/2+1;
@@ -194,7 +202,7 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 					curr_pos->w_eta=delta_eta*4.0/3.0;
 				}
 
-				computeDescretizedSpectrum(viscosity, curr_pos, T_and_boosts, visc_info, discSpectra);
+				computeDescretizedSpectrum(curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
 			}
 		}
 	}
@@ -203,10 +211,10 @@ void pre_computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_
 
 
 /***** Computation of the discretized spectrum *****/
-void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 	
 	//Forward declaration
-	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
+	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	//Local variables
 	double T, qgpFrac, betax, betay, betaz, gamma;
@@ -253,7 +261,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 				sinPhi=sin(phi);
 
 				//Evaluate (A_L)_{alpha beta} \hat{k}_L^alpha \alpha{k}_L^beta
-				if (viscosity) {
+				if (CONST_with_viscosity) {
 					//shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
 					//*shear_info+: 0   1   2   3   4   5   6   7   8   9
 					//\hat{K}=(1,cos(phi)/cosh(eta),sin(phi)/cosh(eta),sinh(eta)/cosh(eta))
@@ -310,7 +318,7 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 				curr_pos->ikt=ikt;
 				curr_pos->iphi=iphi;
 				curr_pos->irap=ieta;
-				fill_grid(curr_pos, kR, T, kHatkHatPiOver_e_P,discSpectra);	
+				fill_grid(curr_pos, kR, T, kHatkHatPiOver_e_P, rate_list,discSpectra);	
 
 
 			}
@@ -322,19 +330,18 @@ void computeDescretizedSpectrum(bool viscosity, struct phaseSpace_pos *curr_pos,
 //Discretized spectra: array[times][Neta][Nphi][Npt][rates]
 //Discretized spectra, version 2: array[times][Neta][Nphi][Npt][rates][value_and_remainder]
 //stPos=[tau, ieta, iphi, ikt]
-void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHatkHatPiOver_e_P, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHatkHatPiOver_e_P, const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 
 	//
 	double QGP_fraction(double T);
-	void get_photon_rate(int selector, double (**local_rate)(double, double, double));
-	double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no);
+	double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kkPiOver_e_P_k2); 
 
 	//
 	int ieta=curr_pos->irap;
 	int iphi=curr_pos->iphi;
 	int ikt=curr_pos->ikt;
 	double tmpRate;
-	double (*local_rate)(double, double, double);
+	//double (*local_rate)(double, double, double);
 	double tmp_cellsize_eta;
 
 	//Size of cell in eta different if integrating 2+1D or 3+1D
@@ -349,15 +356,17 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kHat
 	for(int iRate=0; iRate<CONST_N_rates;iRate++) {
 	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_rateList.size()];
 
-		get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
+		//get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
 
-		//Either use the fits directly or a table made from the fits
-		if (CONST_use_accel_rates[CONST_rates_to_use[iRate]-1]) {
-			tmpRate=get_photon_rate_accel(kR/T, T, kHatkHatPiOver_e_P, iRate);
-		}
-		else {
-			tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
-		}
+		tmpRate=eval_photon_rate(&rate_list[iRate],kR/T,T,kHatkHatPiOver_e_P);
+
+//		//Either use the fits directly or a table made from the fits
+//		if (CONST_use_accel_rates[CONST_rates_to_use[iRate]-1]) {
+//			tmpRate=get_photon_rate_accel(kR/T, T, kHatkHatPiOver_e_P, iRate);
+//		}
+//		else {
+//			tmpRate=(*local_rate)(kR/T,T,kHatkHatPiOver_e_P);
+//		}
 		//tmpRate=kR*(1.0+cos(kR*(2.0)*iphi*CONST_delPhi));
 
 		//QGP fraction

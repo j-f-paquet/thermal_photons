@@ -2,6 +2,154 @@
 
 /***** Rates *****/
 
+void init_rates(struct photonRate * currRate, int id) {
+
+	//
+	double rate_qgp_ideal_born_AMYfit(double, double, double);
+	double rate_qgp_ideal_born_KLS(double, double, double);
+	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_ideal_LO_AMYfit(double, double, double);
+
+	void tabulate_fit(struct photonRate * currRate); 
+
+//const char CONST_available_rate[][100]={"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg", "rate_hg_ideal_Turbide_fit","rate_qgp_ideal_LO_AMYfit"};
+	switch(id) {
+
+		//rate_qgp_ideal_born_AMYfit
+		case 1:
+			
+			currRate->name="rate_qgp_ideal_born_AMYfit";
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			*(currRate->rate_fit_function)=rate_qgp_ideal_born_AMYfit;
+			break;
+
+		//rate_qgp_ideal_born_KLS
+		case 2:
+			
+			currRate->name="rate_qgp_ideal_born_KLS";
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			*(currRate->rate_fit_function)=rate_qgp_ideal_born_KLS;
+			break;
+
+		//rate_qgp_ideal_born_JF_sqrtg
+		case 3:
+			
+			currRate->name="rate_qgp_ideal_born_JF_sqrtg";
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			*(currRate->rate_fit_function)=rate_qgp_ideal_born_JF_sqrtg;
+			break;
+
+		//rate_qgp_viscous_only_born_JF_sqrtg
+		case 4:
+			
+			currRate->name="rate_qgp_viscous_only_born_JF_sqrtg";
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			*(currRate->rate_fit_function)=rate_qgp_viscous_only_born_JF_sqrtg;
+			break;
+
+		//rate_hg_ideal_Turbide_fit
+		case 5:
+
+			currRate->name="rate_hg_ideal_Turbide_fit";
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			*(currRate->rate_fit_function)=rate_hg_ideal_Turbide_fit;
+
+			currRate->use_k_instead_of_kOverT=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=250;
+			currRate->min_temp=CONST_freezeout_T;
+			currRate->max_temp=CONST_pure_QGP_T;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+
+			tabulate_fit(currRate);
+			break;
+
+		//rate_qgp_ideal_born_KLS
+		case 6:
+			
+			currRate->name="rate_qgp_ideal_LO_AMYfit";
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			*(currRate->rate_fit_function)=rate_qgp_ideal_LO_AMYfit;
+			break;
+
+	}
+
+
+
+}
+
+void tabulate_fit(struct photonRate * currRate) {
+
+	void get_photon_rate(int selector, double (**local_rate)(double, double, double));
+	double kOverT_from_index(const struct photonRate * currRate, int i);
+	double temp_from_index(const struct photonRate * currRate, int i);
+
+	if (currRate->tabulate_fit_for_speed) {
+
+		if (currRate->tabulated_rate == 0) {
+			std::cout << "Fit function undefined, can't tabulate it! Aborting...\n";
+			exit(1);
+		}
+		else {
+
+			const int size_x=currRate->number_of_points_in_kOverT;
+			const int size_y=currRate->number_of_points_in_temp;
+
+			currRate->tabulated_rate = new double * [size_y];	
+
+			for(int k=0; k<size_y;k++) {
+				currRate->tabulated_rate[k] = new double [size_x];	
+				for(int j=0; j<size_x;j++) {
+					currRate->tabulated_rate[k][j]=(*(currRate->rate_fit_function))(kOverT_from_index(currRate,j),temp_from_index(currRate,k),0.0);	
+				}
+			}
+
+		}
+
+	}
+}
+
+double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kHatkHatPiOver_e_P) {
+
+	//void get_photon_rate(int selector, double (**local_rate)(double, double, double));
+	double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk);
+
+
+	//
+	double res;
+
+	//Use table
+	if (currRate->use_table_instead_of_fit) {
+
+		res=-1.0;
+	}
+	//Use fit
+	else {
+		//Use tabulate fit for speed
+		if (currRate->tabulate_fit_for_speed) {
+			res=get_photon_rate_accel(currRate, kOverT, T, kHatkHatPiOver_e_P);
+		}
+		//Use plain fit
+		else {
+			res=(*(currRate->rate_fit_function))(kOverT,T,kHatkHatPiOver_e_P);
+		}
+
+	}
+
+	return res;
+}
+
+
+
 /*
 Rates:
 1: double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2);
@@ -13,77 +161,87 @@ Rates:
 */
 
 
-void get_photon_rate(int selector, double (**local_rate)(double, double, double)) {
+//void get_photon_rate(int selector, double (**local_rate)(double, double, double)) {
+//
+//	double rate_qgp_ideal_born_AMYfit(double, double, double);
+//	double rate_qgp_ideal_born_KLS(double, double, double);
+//	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+//	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
+//	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
+//	double rate_qgp_ideal_LO_AMYfit(double, double, double);
+//
+//	//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
+//	switch(selector) {
+//		case 1:
+//			//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
+//			*local_rate = rate_qgp_ideal_born_AMYfit;
+////			*rate_name= "rate_qgp_ideal_born_AMYfit";
+//			break;
+//		case 2: 
+//			*local_rate = rate_qgp_ideal_born_KLS;
+////			*rate_name="rate_qgp_ideal_born_KLS";
+//			break;
+//		case 3: 
+//			*local_rate = rate_qgp_ideal_born_JF_sqrtg;
+////			*rate_name="rate_qgp_ideal_born_JF_sqrtg";
+//			break;
+//		case 4:
+//			*local_rate = rate_qgp_viscous_only_born_JF_sqrtg;
+////			*rate_name="rate_qgp_viscous_only_born_JF_sqrtg";
+//			break;
+//		case 5:
+//			*local_rate = rate_hg_ideal_Turbide_fit;
+////			*rate_name="rate_hg_ideal_Turbide_fit";
+//			break;
+//		case 6:
+//			*local_rate = rate_qgp_ideal_LO_AMYfit;
+////			*rate_name="rate_qgp_ideal_LO_AMYfit";
+//			break;
+//	}
+//
+//
+//
+//}
 
-	double rate_qgp_ideal_born_AMYfit(double, double, double);
-	double rate_qgp_ideal_born_KLS(double, double, double);
-	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
-	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
-	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
-	double rate_qgp_ideal_LO_AMYfit(double, double, double);
-
-	//double (*local_rate)(double, double, double) = CONST_rateList[iRate].c_str();
-	switch(selector) {
-		case 1:
-			//double (*local_rate)(double, double, double) = rate_qgp_ideal_born_AMYfit;
-			*local_rate = rate_qgp_ideal_born_AMYfit;
-//			*rate_name= "rate_qgp_ideal_born_AMYfit";
-			break;
-		case 2: 
-			*local_rate = rate_qgp_ideal_born_KLS;
-//			*rate_name="rate_qgp_ideal_born_KLS";
-			break;
-		case 3: 
-			*local_rate = rate_qgp_ideal_born_JF_sqrtg;
-//			*rate_name="rate_qgp_ideal_born_JF_sqrtg";
-			break;
-		case 4:
-			*local_rate = rate_qgp_viscous_only_born_JF_sqrtg;
-//			*rate_name="rate_qgp_viscous_only_born_JF_sqrtg";
-			break;
-		case 5:
-			*local_rate = rate_hg_ideal_Turbide_fit;
-//			*rate_name="rate_hg_ideal_Turbide_fit";
-			break;
-		case 6:
-			*local_rate = rate_qgp_ideal_LO_AMYfit;
-//			*rate_name="rate_qgp_ideal_LO_AMYfit";
-			break;
-	}
-
-
-
+double kOverT_from_index(const struct photonRate * currRate, int i) {
+	const double k_min=currRate->min_kOverT;
+	const double k_max=currRate->max_kOverT;
+	const int size=currRate->number_of_points_in_kOverT;
+	//return 80*i*i*1.0/(size*size);
+	return k_min+(k_max-k_min)*i*i*1.0/(size*size);
 }
 
-double kOverT_from_index(int i, int size) {
-	return 80*i*i*1.0/(size*size);
+int index_from_kOverT(const struct photonRate * currRate, double kOverT) {
+	const double k_min=currRate->min_kOverT;
+	const double k_max=currRate->max_kOverT;
+	const int size=currRate->number_of_points_in_kOverT;
+	return floor(sqrt((kOverT-k_min)*size*size*1.0/(k_max-k_min)));
+	//return floor(sqrt(kOverT*size*size*1.0/80.0));
 }
 
-int index_from_kOverT(double kOverT, int size) {
-	return floor(sqrt(kOverT*size*size*1.0/80.0));
-}
-
-double temp_from_index(int i, int size, int rate_no) {
-	const double t_min=accel_table_min_temperature[CONST_rates_to_use[rate_no]-1];
-	const double t_max=accel_table_max_temperature[CONST_rates_to_use[rate_no]-1];
+double temp_from_index(const struct photonRate * currRate, int i) {
+	const double t_min=currRate->min_temp;
+	const double t_max=currRate->max_temp;
+	const int size=currRate->number_of_points_in_temp;
 	return t_min+(t_max-t_min)*i*i*1.0/(size*size);
 }
 
-int index_from_temp(double temp, int size, int rate_no) {
-	const double t_min=accel_table_min_temperature[CONST_rates_to_use[rate_no]-1];
-	const double t_max=accel_table_max_temperature[CONST_rates_to_use[rate_no]-1];
+int index_from_temp(const struct photonRate * currRate, double temp) {
+	const double t_min=currRate->min_temp;
+	const double t_max=currRate->max_temp;
+	const int size=currRate->number_of_points_in_temp;
 	return floor(sqrt((temp-t_min)*size*size*1.0/(t_max-t_min)));
 }
 
-double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no) {
+double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk) {
 
 	double res;
 
-	const int size_x=accel_table_sample_x[CONST_rates_to_use[rate_no]-1];
-	const int size_y=accel_table_sample_y[CONST_rates_to_use[rate_no]-1];
+	const int size_x=currRate->number_of_points_in_kOverT;
+	const int size_y=currRate->number_of_points_in_temp;
 
-	int a1=index_from_kOverT(kOverT,size_x);
-	int b1=index_from_temp(T,size_y,rate_no);		
+	int a1=index_from_kOverT(currRate,kOverT);
+	int b1=index_from_temp(currRate,T);		
 
 	//Must decide what to do when the requested value is outside the table's range
 	if ((a1+1>=size_x)||(b1+1>=size_y)||(a1<0)||(b1<0)) {
@@ -91,15 +249,15 @@ double get_photon_rate_accel(double kOverT, double T, double kk, int rate_no) {
 	}
 	else {
 
-		double fx1y1=CONST_rate_tables.tabulated_rates[rate_no][b1][a1];
-		double fx2y1=CONST_rate_tables.tabulated_rates[rate_no][b1][a1+1];
-		double fx1y2=CONST_rate_tables.tabulated_rates[rate_no][b1+1][a1];
-		double fx2y2=CONST_rate_tables.tabulated_rates[rate_no][b1+1][a1+1];
+		double fx1y1=currRate->tabulated_rate[b1][a1];
+		double fx2y1=currRate->tabulated_rate[b1][a1+1];
+		double fx1y2=currRate->tabulated_rate[b1+1][a1];
+		double fx2y2=currRate->tabulated_rate[b1+1][a1+1];
 
-		double x1=kOverT_from_index(a1,size_x);
-		double x2=kOverT_from_index(a1+1,size_x);
-		double y1=temp_from_index(b1,size_y,rate_no);
-		double y2=temp_from_index(b1+1,size_y,rate_no);
+		double x1=kOverT_from_index(currRate,a1);
+		double x2=kOverT_from_index(currRate,a1+1);
+		double y1=temp_from_index(currRate,b1);
+		double y2=temp_from_index(currRate,b1+1);
 
 		//Robust but inefficient
 		if (fx1y1>0&&fx2y1>0&&fx1y2>0&&fx2y2>0) {
@@ -345,7 +503,6 @@ double boseEin(double kOverT) {
 	return 1.0/(exp(kOverT)-1.0);
 
 }
-
 
 //HG ideal rate - Simon Turbide's fit [???]
 double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
