@@ -23,7 +23,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			currRate->name="rate_qgp_ideal_born_AMYfit";
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
-			*(currRate->rate_fit_function)=rate_qgp_ideal_born_AMYfit;
+			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit;
 			break;
 
 		//rate_qgp_ideal_born_KLS
@@ -32,7 +32,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			currRate->name="rate_qgp_ideal_born_KLS";
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
-			*(currRate->rate_fit_function)=rate_qgp_ideal_born_KLS;
+			currRate->rate_fit_function=rate_qgp_ideal_born_KLS;
 			break;
 
 		//rate_qgp_ideal_born_JF_sqrtg
@@ -41,7 +41,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			currRate->name="rate_qgp_ideal_born_JF_sqrtg";
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
-			*(currRate->rate_fit_function)=rate_qgp_ideal_born_JF_sqrtg;
+			currRate->rate_fit_function=rate_qgp_ideal_born_JF_sqrtg;
 			break;
 
 		//rate_qgp_viscous_only_born_JF_sqrtg
@@ -50,7 +50,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			currRate->name="rate_qgp_viscous_only_born_JF_sqrtg";
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
-			*(currRate->rate_fit_function)=rate_qgp_viscous_only_born_JF_sqrtg;
+			currRate->rate_fit_function=rate_qgp_viscous_only_born_JF_sqrtg;
 			break;
 
 		//rate_hg_ideal_Turbide_fit
@@ -59,7 +59,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			currRate->name="rate_hg_ideal_Turbide_fit";
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=true;
-			*(currRate->rate_fit_function)=rate_hg_ideal_Turbide_fit;
+			currRate->rate_fit_function=rate_hg_ideal_Turbide_fit;
 
 			currRate->use_k_instead_of_kOverT=false;
 			currRate->number_of_points_in_kOverT=500;
@@ -78,7 +78,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			currRate->name="rate_qgp_ideal_LO_AMYfit";
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
-			*(currRate->rate_fit_function)=rate_qgp_ideal_LO_AMYfit;
+			currRate->rate_fit_function=rate_qgp_ideal_LO_AMYfit;
 			break;
 
 	}
@@ -95,7 +95,7 @@ void tabulate_fit(struct photonRate * currRate) {
 
 	if (currRate->tabulate_fit_for_speed) {
 
-		if (currRate->tabulated_rate == 0) {
+		if (currRate->rate_fit_function == 0) {
 			std::cout << "Fit function undefined, can't tabulate it! Aborting...\n";
 			exit(1);
 		}

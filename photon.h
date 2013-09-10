@@ -147,7 +147,7 @@ struct photonRate {
 	bool use_table_instead_of_fit;
 
 	//Function returning the hard-coded fit
-	double (**rate_fit_function)(double, double, double);
+	double (*rate_fit_function)(double, double, double);
 
 	//Use fit, but tabulate it internally for speed
 	bool tabulate_fit_for_speed;
