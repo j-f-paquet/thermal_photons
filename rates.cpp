@@ -21,15 +21,32 @@ void init_rates(struct photonRate * currRate, int id) {
 		case 1:
 			
 			currRate->name="rate_qgp_ideal_born_AMYfit";
+			
+			currRate->is_qgp=true;
+
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
 			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit;
+
+
+			currRate->filename_of_external_table="./rate_QGP_2to2_total_eqrate.dat";
+			currRate->use_k_instead_of_kOverT=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+
 			break;
 
 		//rate_qgp_ideal_born_KLS
 		case 2:
 			
 			currRate->name="rate_qgp_ideal_born_KLS";
+			
+			currRate->is_qgp=true;
+
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
 			currRate->rate_fit_function=rate_qgp_ideal_born_KLS;
@@ -39,6 +56,9 @@ void init_rates(struct photonRate * currRate, int id) {
 		case 3:
 			
 			currRate->name="rate_qgp_ideal_born_JF_sqrtg";
+			
+			currRate->is_qgp=true;
+
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
 			currRate->rate_fit_function=rate_qgp_ideal_born_JF_sqrtg;
@@ -48,6 +68,10 @@ void init_rates(struct photonRate * currRate, int id) {
 		case 4:
 			
 			currRate->name="rate_qgp_viscous_only_born_JF_sqrtg";
+			
+			currRate->is_qgp=true;
+			currRate->is_shear_viscous=true;
+
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
 			currRate->rate_fit_function=rate_qgp_viscous_only_born_JF_sqrtg;
@@ -57,6 +81,9 @@ void init_rates(struct photonRate * currRate, int id) {
 		case 5:
 
 			currRate->name="rate_hg_ideal_Turbide_fit";
+			
+			currRate->is_hg=true;
+
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=true;
 			currRate->rate_fit_function=rate_hg_ideal_Turbide_fit;
@@ -72,10 +99,13 @@ void init_rates(struct photonRate * currRate, int id) {
 			tabulate_fit(currRate);
 			break;
 
-		//rate_qgp_ideal_born_KLS
+		//rate_qgp_ideal_LO_AMYfit
 		case 6:
 			
 			currRate->name="rate_qgp_ideal_LO_AMYfit";
+			
+			currRate->is_qgp=true;
+
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
 			currRate->rate_fit_function=rate_qgp_ideal_LO_AMYfit;
@@ -109,7 +139,17 @@ void tabulate_fit(struct photonRate * currRate) {
 			for(int k=0; k<size_y;k++) {
 				currRate->tabulated_rate[k] = new double [size_x];	
 				for(int j=0; j<size_x;j++) {
-					currRate->tabulated_rate[k][j]=(*(currRate->rate_fit_function))(kOverT_from_index(currRate,j),temp_from_index(currRate,k),0.0);	
+					const double temp=temp_from_index(currRate,k);
+					const double ku=kOverT_from_index(currRate,j);
+					double kOverT;
+					//If the table is tabulated with k, ku is k, not k/T
+					if (currRate->use_k_instead_of_kOverT) {
+						kOverT=ku/temp;
+					}
+					else {
+						kOverT=ku;
+					}
+					currRate->tabulated_rate[k][j]=(*(currRate->rate_fit_function))(kOverT,temp,0.0);	
 				}
 			}
 
@@ -122,33 +162,61 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 
 	//void get_photon_rate(int selector, double (**local_rate)(double, double, double));
 	double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk);
-
+	double QGP_fraction(double T); 
 
 	//
 	double res;
 
-	//Use table
-	if (currRate->use_table_instead_of_fit) {
+	//For speed, check if a QGP fraction is used first
+	if (currRate->is_qgp) {
+		res=QGP_fraction(T); 
 
-		res=-1.0;
 	}
-	//Use fit
+	else if (currRate->is_hg) {
+		res=1-QGP_fraction(T);
+	}
 	else {
-		//Use tabulate fit for speed
-		if (currRate->tabulate_fit_for_speed) {
-			res=get_photon_rate_accel(currRate, kOverT, T, kHatkHatPiOver_e_P);
+		res=1.0;
+	}
+
+	//Multiply by shear viscosity factor?
+	if (currRate->is_shear_viscous) {
+		res*=kHatkHatPiOver_e_P/2.0;
+	}
+
+	//Only compute the rate, which is the slowest part of the calculation, if all the above factors are non-zero
+	if (res > 0.0) {
+
+		//Use table
+		if (currRate->use_table_instead_of_fit) {
+
+			res=-1.0;
 		}
-		//Use plain fit
+		//Use fit
 		else {
-			res=(*(currRate->rate_fit_function))(kOverT,T,kHatkHatPiOver_e_P);
+			//Use tabulate fit for speed
+			if (currRate->tabulate_fit_for_speed) {
+				//if the table is w.r.t. k instead of k/T, we have to retrieve the correct value
+				double ku;
+				if (currRate->use_k_instead_of_kOverT) {
+					ku=kOverT*T;
+				}
+				else {
+					ku=kOverT;
+				}
+				res*=get_photon_rate_accel(currRate, ku, T, kHatkHatPiOver_e_P);
+			}
+			//Use plain fit
+			else {
+				res*=(*(currRate->rate_fit_function))(kOverT,T,kHatkHatPiOver_e_P);
+			}
+
 		}
 
 	}
 
 	return res;
 }
-
-
 
 /*
 Rates:
@@ -351,9 +419,7 @@ double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k
 	//Forward declaration
 	double C_hard(double kOverT);
 
-	double res=QGP_fraction(T);
-
-	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
+	double res= CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
 
 	return res;
 
@@ -366,9 +432,7 @@ double rate_qgp_ideal_LO_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2)
 	double C_hard(double kOverT);
 	double C_LPM(double kOverT);
 
-	double res=QGP_fraction(T);
-
-	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT)+C_LPM(kOverT));
+	double res= CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT)+C_LPM(kOverT));
 
 	return res;
 
@@ -380,9 +444,7 @@ double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2) 
 
 	const double qCharge2[]={4.0/9.0,5.0/9.0,2.0/3.0,10.0/9.0,11.0/9.0,5.0/3.0};
 
-	double res=QGP_fraction(T);
-
-	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*qCharge2[CONST_Nf-1]*CONST_alphaEM*CONST_alphaS/(2.0*M_PI*M_PI)*T*T*exp(-kOverT)*log(2.912*kOverT/(CONST_gs*CONST_gs));
+	double res= CONST_GeV2_to_GeVm2_fmm4*qCharge2[CONST_Nf-1]*CONST_alphaEM*CONST_alphaS/(2.0*M_PI*M_PI)*T*T*exp(-kOverT)*log(2.912*kOverT/(CONST_gs*CONST_gs));
 
 	return res;
 
@@ -391,9 +453,7 @@ double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2) 
 //QGP ideal rate - JF fit - q^*=sqrt(g)
 double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2) {
 
-	double res=QGP_fraction(T);
-
-	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(0.8452052719374467 + 0.06345436545672481*kOverT + 0.20266453593373313*kOverT*kOverT + 0.007103855524696941*kOverT*kOverT*kOverT)/(1 + 0.3137709585719375*kOverT + 0.12623968017081683*kOverT*kOverT + 0.0021744062978126125*kOverT*kOverT*kOverT);
+	double res=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(0.8452052719374467 + 0.06345436545672481*kOverT + 0.20266453593373313*kOverT*kOverT + 0.007103855524696941*kOverT*kOverT*kOverT)/(1 + 0.3137709585719375*kOverT + 0.12623968017081683*kOverT*kOverT + 0.0021744062978126125*kOverT*kOverT*kOverT);
 
 	return res;
 
@@ -402,9 +462,7 @@ double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P
 //viscous correction to rate: A_\alpha\beta K^\alpha K^\beta/k^2 k A(k)/(2 pi)^3 * viscous_correction_born_JF_sqrtg()
 double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2) {
 
-	double res = QGP_fraction(T);
-	//
-	if (res > 0) res*=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*kkPiOver_e_P_k2/2.0*exp(-0.5041041126181884 + (-0.5335015716121183 + 1.9967643068761307*kOverT - 0.5616138941792664*kOverT*kOverT - 0.0009120108228910325*kOverT*kOverT*kOverT)/(1 - 2.607918425474197*kOverT - 0.8369709712322181*kOverT*kOverT))*pow(kOverT,2.1309931380115588);
+	double res = CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(-0.5041041126181884 + (-0.5335015716121183 + 1.9967643068761307*kOverT - 0.5616138941792664*kOverT*kOverT - 0.0009120108228910325*kOverT*kOverT*kOverT)/(1 - 2.607918425474197*kOverT - 0.8369709712322181*kOverT*kOverT))*pow(kOverT,2.1309931380115588);
 	
 	return res;
 
@@ -510,13 +568,9 @@ double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2
 	//
 	double HadronicPhase(double E, double T, int process);
 
-	double res=(1-QGP_fraction(T));
-	double tmp=0.0;
+	double res=0.0;
 
-	if (res > 0) {
-		for(int i=1; i<=8;i++) tmp+=HadronicPhase(kOverT*T, T, i);
-		res*=tmp;
-	}
+	for(int i=1; i<=8;i++) res+=HadronicPhase(kOverT*T, T, i);
 
 	return res;
 

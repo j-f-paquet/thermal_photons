@@ -145,6 +145,7 @@ struct photonRate {
 
 	//Set to 1 to read a table from a file, instead of using a hard-coded fit
 	bool use_table_instead_of_fit;
+	std::string filename_of_external_table;
 
 	//Function returning the hard-coded fit
 	double (*rate_fit_function)(double, double, double);
@@ -153,6 +154,12 @@ struct photonRate {
 	bool tabulate_fit_for_speed;
 
 	double ** tabulated_rate;
+
+	//Parameters to specify by what factor should the rate be multiplied by, if any
+	bool is_qgp; //Rate is multiplied by QGP_fraction
+	bool is_hg; //Rate is multiplied by (1-QGP_fraction)
+
+	bool is_shear_viscous; //Multiply rate by K_mu K_nu Pi^\mu\mu/k^2
 
 	//Parameters used to specifiy either the table is...
 	bool use_k_instead_of_kOverT;
@@ -172,7 +179,12 @@ struct photonRate {
 
 	photonRate() {
 
-		tabulated_rate=0;
+		//Set some default values
+		rate_fit_function=0;
+		is_qgp=false;
+		is_hg=false;
+
+		is_shear_viscous=false;
 
 	}
 

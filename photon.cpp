@@ -31,7 +31,7 @@ void photon_prod(const struct photonRate rate_list[]) {
 	bool viscRead(bool binary, void * file, float visc_info[]);
 	void update_position_info(int line, struct phaseSpace_pos *curr_pos);
 	void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
-	void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
+	void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
 	//Variables
 	float T_and_boosts[5], visc_info[10];
@@ -89,7 +89,7 @@ void photon_prod(const struct photonRate rate_list[]) {
 	if (CONST_with_viscosity) std::fclose(viscFile);
 
 	//Compute observables from the discretized photon spectra
-	compute_observables(discSpectra);
+	compute_observables(rate_list, discSpectra);
 
 }
 
@@ -437,146 +437,144 @@ void update_position_info(int line, struct phaseSpace_pos *curr_pos) {
 }
 
 
-void compute_observables(double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 
 	//
-	void compute_midrapidity_yield_and_vn(int rate_id, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
+	void compute_midrapidity_yield_and_vn(const struct photonRate currRate[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]);
 
-	//One file per rate
-	for(int i=0; i<CONST_N_rates; i++) {
-
-		compute_midrapidity_yield_and_vn(i, discSpectra);
-
-	}
+	compute_midrapidity_yield_and_vn(rate_list, discSpectra);
 
 }
 
 //Output the phi-integrated, rapidity-averaged-around-0 yield as a function of pT
-void compute_midrapidity_yield_and_vn(int rate_no, double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
+void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], double discSpectra[CONST_Neta][CONST_Nphi][CONST_Nkt][3][CONST_N_rates]) {
 
 	double kt, eta, phi, yFac, rap_interval;
 	double yield, vn[CONST_FourierNb];
 	int iEtamin=0, iEtamax;
 	bool exact_midrap=false, bad_rap_discret = false;
-	std::string rate_name = CONST_available_rate[CONST_rates_to_use[rate_no]-1];
 
-	//Set output file name
-	std::stringstream tmpStr;
-	tmpStr << "vn_";
-	tmpStr << rate_name.c_str(); //CONST_rate_names[rate_id];
-	tmpStr << ".dat";
+	//One file per rate
+	for(int rate_no=0; rate_no<CONST_N_rates; rate_no++) {
 
-	//Open output file
-	std::ofstream outfile;
-	outfile.open(tmpStr.str().c_str());
-	//Set the format of the output
-	//outfile.width (10);
-	outfile.precision(10);
-	outfile.setf(std::ios::scientific);
+		//Set output file name
+		std::stringstream tmpStr;
+		tmpStr << "vn_";
+		tmpStr << rate_list[rate_no].name.c_str();
+		tmpStr << ".dat";
 
-	//Output result
-	outfile << "#pt" << "\t" << "yield";
-	for(int j=1;j<=CONST_FourierNb; j++) {
-		outfile	<< "\tyield*vn[" << j << "]\tvn[" << j << "]";
-	}
-	outfile<< "\n";
+		//Open output file
+		std::ofstream outfile;
+		outfile.open(tmpStr.str().c_str());
+		//Set the format of the output
+		//outfile.width (10);
+		outfile.precision(10);
+		outfile.setf(std::ios::scientific);
+
+		//Output result
+		outfile << "#pt" << "\t" << "yield";
+		for(int j=1;j<=CONST_FourierNb; j++) {
+			outfile	<< "\tyield*vn[" << j << "]\tvn[" << j << "]";
+		}
+		outfile<< "\n";
+			
+
+		//Identify the cells in rapidity that should be averaged over
+		for(int ieta=0;ieta<CONST_Neta; ieta++) {
+
+			eta=CONST_etaMin+ieta*CONST_delEta;	
+
+			if (fabs(eta) <= CONST_midRapCut) {
+				iEtamin=ieta;
+				iEtamax=ieta;
+			}
+			else if (fabs(eta) > CONST_midRapCut) {
+				//iEtamax=ieta-1;
+				continue;
+			}
+			else iEtamax=ieta;
 		
-
-	//Identify the cells in rapidity that should be averaged over
-	for(int ieta=0;ieta<CONST_Neta; ieta++) {
-
-		eta=CONST_etaMin+ieta*CONST_delEta;	
-
-		if (fabs(eta) <= CONST_midRapCut) {
-			iEtamin=ieta;
-			iEtamax=ieta;
 		}
-		else if (fabs(eta) > CONST_midRapCut) {
-			//iEtamax=ieta-1;
-			continue;
-		}
-		else iEtamax=ieta;
-	
-	}
 
-	//If there is a single point and it is eta=0.0, 
-	if (iEtamin == iEtamax) {
-		if (0.0 == CONST_etaMin+iEtamin*CONST_delEta) {
-			exact_midrap=true;
-			rap_interval=1.0;
+		//If there is a single point and it is eta=0.0, 
+		if (iEtamin == iEtamax) {
+			if (0.0 == CONST_etaMin+iEtamin*CONST_delEta) {
+				exact_midrap=true;
+				rap_interval=1.0;
+			}
+			else {
+				bad_rap_discret=true;
+			}
 		}
 		else {
-			bad_rap_discret=true;
+			rap_interval=(iEtamax-iEtamin)*CONST_delEta;
 		}
-	}
-	else {
-		rap_interval=(iEtamax-iEtamin)*CONST_delEta;
-	}
 
-	if (bad_rap_discret) {
-			outfile << "Can't evaluate midrapidity spectra with current rapidity discretization\n";
-	}
-	else {
+		if (bad_rap_discret) {
+				outfile << "Can't evaluate midrapidity spectra with current rapidity discretization\n";
+		}
+		else {
 
-		for(int ikt=0;ikt<CONST_Nkt; ikt++) {
+			for(int ikt=0;ikt<CONST_Nkt; ikt++) {
 
-			//Will contain the results of the phi integration and rapidity averaging
-			yield=0.0;
-			for(int i=1;i<=CONST_FourierNb; i++) {
-				vn[i]=0;
-			}
+				//Will contain the results of the phi integration and rapidity averaging
+				yield=0.0;
+				for(int i=1;i<=CONST_FourierNb; i++) {
+					vn[i]=0;
+				}
 
-			kt=CONST_ktMin+ikt*CONST_delKt;	
+				kt=CONST_ktMin+ikt*CONST_delKt;	
 
-			//Loop over rapidity eta
-			for(int ieta=iEtamin;ieta<=iEtamax; ieta++) {
+				//Loop over rapidity eta
+				for(int ieta=iEtamin;ieta<=iEtamax; ieta++) {
 
-				eta=CONST_etaMin+ieta*CONST_delEta;	
+					eta=CONST_etaMin+ieta*CONST_delEta;	
 
-				//Loop over phi (trapezoidal method)
-				for(int iphi=0;iphi<CONST_Nphi-1; iphi++) {
+					//Loop over phi (trapezoidal method)
+					for(int iphi=0;iphi<CONST_Nphi-1; iphi++) {
 
-					phi=iphi*CONST_delPhi;	
-					
-					if (exact_midrap) {
-						yFac=1.0;
-					}
-					//Let's use a simple midpoint rule for now
-					else {
-						yFac=CONST_delEta;
-					}
+						phi=iphi*CONST_delPhi;	
+						
+						if (exact_midrap) {
+							yFac=1.0;
+						}
+						//Let's use a simple midpoint rule for now
+						else {
+							yFac=CONST_delEta;
+						}
 
-					//Finally, multiply by dNdydptdphi[NY][NPT][NPHI+1] 
-					//tmpIntRes+=phiFac*yFac*particleList[j].dNdydptdphi[iy][ipt][iphi];
-					yield+=discSpectra[ieta][iphi][ikt][1][rate_no]*yFac;
-					for(int i=1;i<=CONST_FourierNb; i++) {
-						vn[i]+=yFac*discSpectra[ieta][iphi][ikt][1][rate_no]*cos(i*phi);
+						//Finally, multiply by dNdydptdphi[NY][NPT][NPHI+1] 
+						//tmpIntRes+=phiFac*yFac*particleList[j].dNdydptdphi[iy][ipt][iphi];
+						yield+=discSpectra[ieta][iphi][ikt][1][rate_no]*yFac;
+						for(int i=1;i<=CONST_FourierNb; i++) {
+							vn[i]+=yFac*discSpectra[ieta][iphi][ikt][1][rate_no]*cos(i*phi);
+						}
+						
 					}
 					
 				}
-				
-			}
 
-			//Multiply by delta_ph and divide by the rapidity integration range 
-			//(to yield an average instead of an integral)
-			yield*=CONST_delPhi/rap_interval/(2.0*M_PI);
-			for(int j=1;j<=CONST_FourierNb; j++) {
-				vn[j]*=CONST_delPhi/rap_interval/(2.0*M_PI);
-			}
+				//Multiply by delta_ph and divide by the rapidity integration range 
+				//(to yield an average instead of an integral)
+				yield*=CONST_delPhi/rap_interval/(2.0*M_PI);
+				for(int j=1;j<=CONST_FourierNb; j++) {
+					vn[j]*=CONST_delPhi/rap_interval/(2.0*M_PI);
+				}
 
-			//Output result
-			outfile << kt << "\t" << yield;
-			for(int j=1;j<=CONST_FourierNb; j++) {
-				outfile	<< "\t" << vn[j] << "\t" << vn[j]/yield;
-			}
-			outfile<< "\n";
+				//Output result
+				outfile << kt << "\t" << yield;
+				for(int j=1;j<=CONST_FourierNb; j++) {
+					outfile	<< "\t" << vn[j] << "\t" << vn[j]/yield;
+				}
+				outfile<< "\n";
 
+
+			}
 
 		}
 
+		//Close file
+		outfile.close();
 	}
-
-	//Close file
-	outfile.close();
 
 }
