@@ -2,7 +2,7 @@
 
 /***** Rates *****/
 
-void init_rates(struct photonRate * currRate, int id) {
+void init_rates(struct photonRate * currRate, enum rate_type id) {
 
 	//
 	double rate_qgp_ideal_born_AMYfit(double, double, double);
@@ -11,20 +11,45 @@ void init_rates(struct photonRate * currRate, int id) {
 	double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_qgp_ideal_LO_AMYfit(double, double, double);
+	double rate_qgp_ideal_born_AMYfit_with_cuts(double kOverT, double T, double kkPiOver_e_P_k2);
 
 	void tabulate_fit(struct photonRate * currRate); 
+	void load_rate_from_file(struct photonRate * currRate);
 
 //const char CONST_available_rate[][100]={"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg", "rate_hg_ideal_Turbide_fit","rate_qgp_ideal_LO_AMYfit"};
 	switch(id) {
 
-		//rate_qgp_ideal_born_AMYfit
-		case 1:
+		case qgp_ideal_born_AMYfit_tabulated:
 			
-			currRate->name="rate_qgp_ideal_born_AMYfit";
+			currRate->name="rate_qgp_ideal_born_AMYfit_tabulated";
 			
 			currRate->is_qgp=true;
 
 			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit;
+
+			currRate->use_k_instead_of_kOverT=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
+			break;
+
+		case qgp_ideal_born_AMY_table:
+			
+			currRate->name="rate_qgp_ideal_born_AMY_table";
+			
+			currRate->is_qgp=true;
+
+			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
 			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit;
 
@@ -37,11 +62,41 @@ void init_rates(struct photonRate * currRate, int id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+			load_rate_from_file(currRate);
+
+			break;
+
+
+		case qgp_ideal_born_AMYfit_with_cuts:
+
+			currRate->name="rate_qgp_ideal_born_AMYfit_cuts";
+			
+			currRate->is_qgp=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit_with_cuts;
+
+			break;
+			
+
+		//rate_qgp_ideal_born_AMYfit
+		case qgp_ideal_born_AMYfit:
+			
+			currRate->name="rate_qgp_ideal_born_AMYfit";
+			
+			currRate->is_qgp=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit;
 
 			break;
 
 		//rate_qgp_ideal_born_KLS
-		case 2:
+		case qgp_ideal_born_KLS:
 			
 			currRate->name="rate_qgp_ideal_born_KLS";
 			
@@ -53,7 +108,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			break;
 
 		//rate_qgp_ideal_born_JF_sqrtg
-		case 3:
+		case qgp_ideal_born_JF_sqrtg:
 			
 			currRate->name="rate_qgp_ideal_born_JF_sqrtg";
 			
@@ -65,7 +120,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			break;
 
 		//rate_qgp_viscous_only_born_JF_sqrtg
-		case 4:
+		case qgp_viscous_only_born_JF_sqrtg:
 			
 			currRate->name="rate_qgp_viscous_only_born_JF_sqrtg";
 			
@@ -78,7 +133,7 @@ void init_rates(struct photonRate * currRate, int id) {
 			break;
 
 		//rate_hg_ideal_Turbide_fit
-		case 5:
+		case hg_ideal_Turbide_fit:
 
 			currRate->name="rate_hg_ideal_Turbide_fit";
 			
@@ -95,12 +150,14 @@ void init_rates(struct photonRate * currRate, int id) {
 			currRate->max_temp=CONST_pure_QGP_T;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=quadratic;
+			currRate->temp_discretization_type=quadratic;
 
 			tabulate_fit(currRate);
 			break;
 
 		//rate_qgp_ideal_LO_AMYfit
-		case 6:
+		case qgp_ideal_LO_AMYfit:
 			
 			currRate->name="rate_qgp_ideal_LO_AMYfit";
 			
@@ -120,8 +177,7 @@ void init_rates(struct photonRate * currRate, int id) {
 void tabulate_fit(struct photonRate * currRate) {
 
 	void get_photon_rate(int selector, double (**local_rate)(double, double, double));
-	double kOverT_from_index(const struct photonRate * currRate, int i);
-	double temp_from_index(const struct photonRate * currRate, int i);
+	double interp_x_from_index(enum interp_type interp_type, double xmin, double xmax, int i, int size); 
 
 	if (currRate->tabulate_fit_for_speed) {
 
@@ -137,10 +193,12 @@ void tabulate_fit(struct photonRate * currRate) {
 			currRate->tabulated_rate = new double * [size_y];	
 
 			for(int k=0; k<size_y;k++) {
+				const double temp=interp_x_from_index(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,k,currRate->number_of_points_in_temp);
 				currRate->tabulated_rate[k] = new double [size_x];	
 				for(int j=0; j<size_x;j++) {
-					const double temp=temp_from_index(currRate,k);
-					const double ku=kOverT_from_index(currRate,j);
+					const double ku=interp_x_from_index(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,j,currRate->number_of_points_in_kOverT);
+					//const double temp=temp_from_index(currRate,k);
+					//const double ku=kOverT_from_index(currRate,j);
 					double kOverT;
 					//If the table is tabulated with k, ku is k, not k/T
 					if (currRate->use_k_instead_of_kOverT) {
@@ -155,6 +213,37 @@ void tabulate_fit(struct photonRate * currRate) {
 
 		}
 
+	}
+}
+
+//Assume that each line correspond to a temperature and each column to a photon energy (or photon energy over T)
+void load_rate_from_file(struct photonRate * currRate) {
+
+	float tmpRate;
+	std::ifstream rateFile;
+	rateFile.open(currRate->filename_of_external_table.c_str(),std::ios::in);
+
+	//Check if the file exists
+	if (!rateFile.good()) {
+		std::cout << "Can't read \"" << currRate->filename_of_external_table.c_str() << "\"... Aborting.\n";
+		exit(1);
+	}
+	else  {
+
+		const int size_x=currRate->number_of_points_in_kOverT;
+		const int size_y=currRate->number_of_points_in_temp;
+
+		currRate->tabulated_rate = new double * [size_y];	
+
+		for(int k=0; k<size_y;k++) {
+			currRate->tabulated_rate[k] = new double [size_x];	
+			for(int j=0; j<size_x;j++) {
+				rateFile >> tmpRate;
+				currRate->tabulated_rate[k][j]=tmpRate;
+			}
+		}
+
+		rateFile.close();
 	}
 }
 
@@ -187,31 +276,23 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 	//Only compute the rate, which is the slowest part of the calculation, if all the above factors are non-zero
 	if (res > 0.0) {
 
-		//Use table
-		if (currRate->use_table_instead_of_fit) {
-
-			res=-1.0;
-		}
-		//Use fit
-		else {
-			//Use tabulate fit for speed
-			if (currRate->tabulate_fit_for_speed) {
-				//if the table is w.r.t. k instead of k/T, we have to retrieve the correct value
-				double ku;
-				if (currRate->use_k_instead_of_kOverT) {
-					ku=kOverT*T;
-				}
-				else {
-					ku=kOverT;
-				}
-				res*=get_photon_rate_accel(currRate, ku, T, kHatkHatPiOver_e_P);
+		//For tabulated rate fit or for external rate tables 
+		if ((currRate->tabulate_fit_for_speed)||(currRate->use_table_instead_of_fit)) {
+			//if the table is w.r.t. k instead of k/T, we have to retrieve the correct value
+			double ku;
+			if (currRate->use_k_instead_of_kOverT) {
+				ku=kOverT*T;
 			}
-			//Use plain fit
 			else {
-				res*=(*(currRate->rate_fit_function))(kOverT,T,kHatkHatPiOver_e_P);
+				ku=kOverT;
 			}
-
+			res*=get_photon_rate_accel(currRate, ku, T, kHatkHatPiOver_e_P);
 		}
+		//Use plain fit
+		else {
+			res*=(*(currRate->rate_fit_function))(kOverT,T,kHatkHatPiOver_e_P);
+		}
+
 
 	}
 
@@ -271,45 +352,98 @@ Rates:
 //
 //}
 
-double kOverT_from_index(const struct photonRate * currRate, int i) {
-	const double k_min=currRate->min_kOverT;
-	const double k_max=currRate->max_kOverT;
-	const int size=currRate->number_of_points_in_kOverT;
-	//return 80*i*i*1.0/(size*size);
-	return k_min+(k_max-k_min)*i*i*1.0/(size*size);
+double interp_x_from_index(enum interp_type interp_type, double xmin, double xmax, int i, int size) {
+
+	double res;
+
+	switch(interp_type) {
+	//Linear
+	case linear:
+		res=xmin+(xmax-xmin)*i*1.0/(size-1);
+		break;
+
+	//Quadratic
+	case quadratic:
+		res=xmin+(xmax-xmin)*i*i*1.0/((size-1)*(size-1));
+		break;
+
+	default:
+		res=1./0.;
+		break;
+	}
+
+	return res;
+
 }
 
-int index_from_kOverT(const struct photonRate * currRate, double kOverT) {
-	const double k_min=currRate->min_kOverT;
-	const double k_max=currRate->max_kOverT;
-	const int size=currRate->number_of_points_in_kOverT;
-	return floor(sqrt((kOverT-k_min)*size*size*1.0/(k_max-k_min)));
-	//return floor(sqrt(kOverT*size*size*1.0/80.0));
+int interp_index_from_x(enum interp_type interp_type, double xmin, double xmax, double x, int size) {
+
+	int index;
+
+	switch(interp_type) {
+	//Linear
+	case linear:
+		index=floor((x-xmin)*(size-1)*1.0/(xmax-xmin)+0.5);
+		break;
+
+	//Quadratic
+	case quadratic:
+		index=floor(sqrt((x-xmin)*(size-1)*(size-1)*1.0/(xmax-xmin))+0.5);
+		break;
+
+	default:
+		index=-1;
+		break;
+	}
+
+	return index;
+
 }
 
-double temp_from_index(const struct photonRate * currRate, int i) {
-	const double t_min=currRate->min_temp;
-	const double t_max=currRate->max_temp;
-	const int size=currRate->number_of_points_in_temp;
-	return t_min+(t_max-t_min)*i*i*1.0/(size*size);
-}
-
-int index_from_temp(const struct photonRate * currRate, double temp) {
-	const double t_min=currRate->min_temp;
-	const double t_max=currRate->max_temp;
-	const int size=currRate->number_of_points_in_temp;
-	return floor(sqrt((temp-t_min)*size*size*1.0/(t_max-t_min)));
-}
+//double kOverT_from_index(const struct photonRate * currRate, int i) {
+//	const double k_min=currRate->min_kOverT;
+//	const double k_max=currRate->max_kOverT;
+//	const int size=currRate->number_of_points_in_kOverT;
+//	//return 80*i*i*1.0/(size*size);
+//	return k_min+(k_max-k_min)*i*i*1.0/(size*size);
+//}
+//
+//int index_from_kOverT(const struct photonRate * currRate, double kOverT) {
+//	const double k_min=currRate->min_kOverT;
+//	const double k_max=currRate->max_kOverT;
+//	const int size=currRate->number_of_points_in_kOverT;
+//	return floor(sqrt((kOverT-k_min)*size*size*1.0/(k_max-k_min)));
+//	//return floor(sqrt(kOverT*size*size*1.0/80.0));
+//}
+//
+//double temp_from_index(const struct photonRate * currRate, int i) {
+//	const double t_min=currRate->min_temp;
+//	const double t_max=currRate->max_temp;
+//	const int size=currRate->number_of_points_in_temp;
+//	return t_min+(t_max-t_min)*i*i*1.0/(size*size);
+//}
+//
+//int index_from_temp(const struct photonRate * currRate, double temp) {
+//	const double t_min=currRate->min_temp;
+//	const double t_max=currRate->max_temp;
+//	const int size=currRate->number_of_points_in_temp;
+//	return floor(sqrt((temp-t_min)*size*size*1.0/(t_max-t_min)));
+//}
 
 double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk) {
+
+	double interp_x_from_index(enum interp_type interp_type, double xmin, double xmax, int i, int size);
+	int interp_index_from_x(enum interp_type interp_type, double xmin, double xmax, double x, int size); 
 
 	double res;
 
 	const int size_x=currRate->number_of_points_in_kOverT;
 	const int size_y=currRate->number_of_points_in_temp;
 
-	int a1=index_from_kOverT(currRate,kOverT);
-	int b1=index_from_temp(currRate,T);		
+	//int a1=index_from_kOverT(currRate,kOverT);
+	//int b1=index_from_temp(currRate,T);		
+	int a1=interp_index_from_x(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,kOverT,currRate->number_of_points_in_kOverT);
+	int b1=interp_index_from_x(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,T,currRate->number_of_points_in_temp);
 
 	//Must decide what to do when the requested value is outside the table's range
 	if ((a1+1>=size_x)||(b1+1>=size_y)||(a1<0)||(b1<0)) {
@@ -322,10 +456,14 @@ double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, 
 		double fx1y2=currRate->tabulated_rate[b1+1][a1];
 		double fx2y2=currRate->tabulated_rate[b1+1][a1+1];
 
-		double x1=kOverT_from_index(currRate,a1);
-		double x2=kOverT_from_index(currRate,a1+1);
-		double y1=temp_from_index(currRate,b1);
-		double y2=temp_from_index(currRate,b1+1);
+		//double x1=kOverT_from_index(currRate,a1);
+		//double x2=kOverT_from_index(currRate,a1+1);
+		//double y1=temp_from_index(currRate,b1);
+		//double y2=temp_from_index(currRate,b1+1);
+		double x1=interp_x_from_index(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,a1,currRate->number_of_points_in_kOverT);
+		double x2=interp_x_from_index(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,a1+1,currRate->number_of_points_in_kOverT);
+		double y1=interp_x_from_index(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,b1,currRate->number_of_points_in_temp);
+		double y2=interp_x_from_index(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,b1+1,currRate->number_of_points_in_temp);
 
 		//Robust but inefficient
 		if (fx1y1>0&&fx2y1>0&&fx1y2>0&&fx2y2>0) {
@@ -420,6 +558,24 @@ double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k
 	double C_hard(double kOverT);
 
 	double res= CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
+
+	return res;
+
+}
+
+//QGP ideal rate - Born - AMY fit [arXiv:hep-ph/0111107, section I]
+double rate_qgp_ideal_born_AMYfit_with_cuts(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//Forward declaration
+	double C_hard(double kOverT);
+	double res;
+
+	if ((kOverT*T < 0.05)||(kOverT*T>4.0)||(T<0.1)||(T>0.8)) {
+		res=0.0;
+	} 
+	else {
+		res=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*(log(1/CONST_mInfOverT)+C_hard(kOverT));
+	}
 
 	return res;
 

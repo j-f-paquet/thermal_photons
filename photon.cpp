@@ -6,7 +6,7 @@ int main() {
 
 	//Forward declaration
 	void photon_prod(const struct photonRate rate_list[]);
-	void init_rates(struct photonRate * currRate, int id); 
+	void init_rates(struct photonRate * currRate, enum rate_type id); 
 
 	//
 	struct photonRate rate_list[CONST_N_rates];

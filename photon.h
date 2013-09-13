@@ -75,18 +75,31 @@ const double CONST_delEta= CONST_Neta > 1 ? (CONST_etaMax-CONST_etaMin)/(CONST_N
 const double CONST_delPhi=(2*M_PI)/(CONST_Nphi-1.0);
 const double CONST_delKt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
 
-//Observables
-const char CONST_available_rate[][100]={"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg", "rate_hg_ideal_Turbide_fit","rate_qgp_ideal_LO_AMYfit"};
-/*
-Rates:
-1: double rate_qgp_ideal_born_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2);
-2: double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2);
-3: double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
-4: double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
-5: rate_hg_ideal_Turbide_fit
-6: rate_qgp_ideal_LO_AMYfit
-*/
-const int CONST_rates_to_use[] = {1,2,5,6};
+/****** Available rates ******/
+enum rate_type {
+qgp_ideal_born_AMYfit,
+qgp_ideal_born_KLS,
+qgp_ideal_born_JF_sqrtg,
+qgp_viscous_only_born_JF_sqrtg, 
+hg_ideal_Turbide_fit,
+qgp_ideal_LO_AMYfit,
+qgp_ideal_born_AMY_table,
+qgp_ideal_born_AMYfit_with_cuts,
+qgp_ideal_born_AMYfit_tabulated
+};
+/****************************/
+//const enum rate_type CONST_rates_to_use[] = {qgp_ideal_born_AMYfit,qgp_ideal_born_KLS,hg_ideal_Turbide_fit,qgp_ideal_LO_AMYfit,qgp_ideal_born_AMYfit_with_cuts,qgp_ideal_born_AMY_table, qgp_ideal_born_AMYfit_tabulated};
+const enum rate_type CONST_rates_to_use[] = {
+qgp_ideal_born_AMYfit,
+//qgp_ideal_born_KLS,
+//qgp_ideal_born_JF_sqrtg,
+//qgp_viscous_only_born_JF_sqrtg, 
+//hg_ideal_Turbide_fit,
+//qgp_ideal_LO_AMYfit,
+qgp_ideal_born_AMY_table,
+qgp_ideal_born_AMYfit_with_cuts,
+qgp_ideal_born_AMYfit_tabulated
+};
 //const int CONST_rates_to_use[] = {1,2,3,4,5,6};
 const int CONST_N_rates = sizeof(CONST_rates_to_use)/sizeof(int);
 //
@@ -138,6 +151,8 @@ struct phaseSpace_pos {
 
 };
 
+enum interp_type { linear, quadratic };
+
 struct photonRate {
 
 	//Name used when saving the results in a file
@@ -167,15 +182,9 @@ struct photonRate {
 	int number_of_points_in_temp;
 	double min_temp, max_temp;
 	double min_kOverT, max_kOverT;
-
-	//Function to use to find the nearest tabulated kOverT
-	double (**index_from_kOverT)(double, double, double);
-	double (**kOverT_from_index)(double, double, double);
-
-	//Function to use to find the nearest tabulated temperature
-	double (**index_from_temp)(double, double, double);
-	double (**temp_from_index)(double, double, double);
-
+	//Have to specify if the sampling is linear, quadratic, ...
+	enum interp_type kOverT_discretization_type; 
+	enum interp_type temp_discretization_type; 
 
 	photonRate() {
 
