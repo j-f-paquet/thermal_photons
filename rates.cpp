@@ -57,7 +57,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 
 
 			currRate->filename_of_external_table="./rate_QGP_2to2_total_eqrate.dat";
-			currRate->use_k_instead_of_kOverT=true;
+			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=80;
 			currRate->number_of_points_in_temp=351;
 			currRate->min_temp=0.1;
