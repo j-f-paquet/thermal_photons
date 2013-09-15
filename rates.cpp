@@ -12,6 +12,8 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 	double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_qgp_ideal_LO_AMYfit(double, double, double);
 	double rate_qgp_ideal_born_AMYfit_with_cuts(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_viscous_only_born_g2_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2); 
+	double k2_normalisation(double kOverT, double T, double kk);
 
 	void tabulate_fit(struct photonRate * currRate); 
 	void load_rate_from_file(struct photonRate * currRate);
@@ -29,7 +31,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->tabulate_fit_for_speed=true;
 			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit;
 
-			currRate->use_k_instead_of_kOverT=true;
+			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=80;
 			currRate->number_of_points_in_temp=351;
 			currRate->min_temp=0.1;
@@ -143,7 +145,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->tabulate_fit_for_speed=true;
 			currRate->rate_fit_function=rate_hg_ideal_Turbide_fit;
 
-			currRate->use_k_instead_of_kOverT=false;
+			currRate->use_k_instead_of_kOverT_for_table=false;
 			currRate->number_of_points_in_kOverT=500;
 			currRate->number_of_points_in_temp=250;
 			currRate->min_temp=CONST_freezeout_T;
@@ -166,6 +168,70 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
 			currRate->rate_fit_function=rate_qgp_ideal_LO_AMYfit;
+			break;
+
+		case qgp_viscous_only_born_g2_sqrtg:
+			
+			currRate->name="rate_qgp_viscous_only_born_g2_sqrtg";
+			
+			currRate->is_qgp=true;
+			currRate->is_shear_viscous=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			currRate->rate_fit_function=rate_qgp_viscous_only_born_g2_sqrtg;
+			break;
+
+		case qgp_viscous_only_born_g2_sqrtg_fit_tabulated:
+			
+			currRate->name="qgp_viscous_only_born_g2_sqrtg_fit_tabulated";
+			
+			currRate->is_qgp=true;
+			currRate->is_shear_viscous=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_qgp_viscous_only_born_g2_sqrtg;
+
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
+			break;
+
+		case qgp_viscous_only_born_g2_sqrtg_table:
+			
+			currRate->name="qgp_viscous_only_born_g2_sqrtg_table";
+			
+			currRate->is_qgp=true;
+			currRate->is_shear_viscous=true;
+
+			currRate->use_table_instead_of_fit=true;
+			currRate->tabulate_fit_for_speed=false;
+
+			currRate->filename_of_external_table="./rate_QGP_2to2_total_viscous.dat";
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			currRate->extra_normalisation_factor_function=k2_normalisation;
+
+			load_rate_from_file(currRate);
+
 			break;
 
 	}
@@ -201,7 +267,7 @@ void tabulate_fit(struct photonRate * currRate) {
 					//const double ku=kOverT_from_index(currRate,j);
 					double kOverT;
 					//If the table is tabulated with k, ku is k, not k/T
-					if (currRate->use_k_instead_of_kOverT) {
+					if (currRate->use_k_instead_of_kOverT_for_table) {
 						kOverT=ku/temp;
 					}
 					else {
@@ -274,13 +340,13 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 	}
 
 	//Only compute the rate, which is the slowest part of the calculation, if all the above factors are non-zero
-	if (res > 0.0) {
+	if (res != 0.0) {
 
 		//For tabulated rate fit or for external rate tables 
 		if ((currRate->tabulate_fit_for_speed)||(currRate->use_table_instead_of_fit)) {
 			//if the table is w.r.t. k instead of k/T, we have to retrieve the correct value
 			double ku;
-			if (currRate->use_k_instead_of_kOverT) {
+			if (currRate->use_k_instead_of_kOverT_for_table) {
 				ku=kOverT*T;
 			}
 			else {
@@ -291,6 +357,11 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 		//Use plain fit
 		else {
 			res*=(*(currRate->rate_fit_function))(kOverT,T,kHatkHatPiOver_e_P);
+		}
+
+
+		if (currRate->extra_normalisation_factor_function != 0) {
+			res*=(*(currRate->extra_normalisation_factor_function))(kOverT,T,kHatkHatPiOver_e_P);
 		}
 
 
@@ -624,6 +695,21 @@ double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiO
 
 }
 
+//viscous correction to rate
+//q^*=sqrt(g_s), g_s=2 and 0.23<k/T<50
+//Set to 0 outside its validity range
+double rate_qgp_viscous_only_born_g2_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2) {
+	
+	const double kOverT_min=.23, kOverT_max=55.;
+
+	double res = 0.0;
+
+	if ((kOverT>kOverT_min)&&(kOverT<kOverT_max)) res=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(0.295523 +(122.469 -713.728*kOverT+1034.67*kOverT*kOverT-1437.68*kOverT*kOverT*kOverT-650.401*kOverT*kOverT*kOverT*kOverT+562.913*kOverT*kOverT*kOverT*kOverT*kOverT+1.86032*kOverT*kOverT*kOverT*kOverT*kOverT*kOverT)/(1-155.427*kOverT+794.21*kOverT*kOverT-743.499*kOverT*kOverT*kOverT+910.294*kOverT*kOverT*kOverT*kOverT+109.401*kOverT*kOverT*kOverT*kOverT*kOverT))*pow(kOverT,0.797818);
+	
+	return res;
+
+}
+
 ////QGP viscous rate
 //double factor_born_viscous(double kOverT) {
 //
@@ -788,4 +874,7 @@ double HadronicPhase(double E, double T, int process)
 }
 
 
-
+double k2_normalisation(double kOverT, double T, double kk) {
+	const double res=kOverT*T;
+	return res*res;
+}

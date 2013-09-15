@@ -85,20 +85,26 @@ hg_ideal_Turbide_fit,
 qgp_ideal_LO_AMYfit,
 qgp_ideal_born_AMY_table,
 qgp_ideal_born_AMYfit_with_cuts,
-qgp_ideal_born_AMYfit_tabulated
+qgp_ideal_born_AMYfit_tabulated,
+qgp_viscous_only_born_g2_sqrtg,
+qgp_viscous_only_born_g2_sqrtg_table,
+qgp_viscous_only_born_g2_sqrtg_fit_tabulated
 };
 /****************************/
 //const enum rate_type CONST_rates_to_use[] = {qgp_ideal_born_AMYfit,qgp_ideal_born_KLS,hg_ideal_Turbide_fit,qgp_ideal_LO_AMYfit,qgp_ideal_born_AMYfit_with_cuts,qgp_ideal_born_AMY_table, qgp_ideal_born_AMYfit_tabulated};
 const enum rate_type CONST_rates_to_use[] = {
 qgp_ideal_born_AMYfit,
-//qgp_ideal_born_KLS,
-//qgp_ideal_born_JF_sqrtg,
-//qgp_viscous_only_born_JF_sqrtg, 
-//hg_ideal_Turbide_fit,
-//qgp_ideal_LO_AMYfit,
+qgp_ideal_born_KLS,
+qgp_ideal_born_JF_sqrtg,
+qgp_viscous_only_born_JF_sqrtg,
+hg_ideal_Turbide_fit,
+qgp_ideal_LO_AMYfit,
 qgp_ideal_born_AMY_table,
 qgp_ideal_born_AMYfit_with_cuts,
-qgp_ideal_born_AMYfit_tabulated
+qgp_ideal_born_AMYfit_tabulated,
+qgp_viscous_only_born_g2_sqrtg,
+qgp_viscous_only_born_g2_sqrtg_table,
+qgp_viscous_only_born_g2_sqrtg_fit_tabulated
 };
 //const int CONST_rates_to_use[] = {1,2,3,4,5,6};
 const int CONST_N_rates = sizeof(CONST_rates_to_use)/sizeof(int);
@@ -165,6 +171,10 @@ struct photonRate {
 	//Function returning the hard-coded fit
 	double (*rate_fit_function)(double, double, double);
 
+	//The rate can be further multiplied by this function, in case
+	//additional normalisation is needed (e.g. for tables)
+	double (*extra_normalisation_factor_function)(double, double, double);
+
 	//Use fit, but tabulate it internally for speed
 	bool tabulate_fit_for_speed;
 
@@ -177,7 +187,7 @@ struct photonRate {
 	bool is_shear_viscous; //Multiply rate by K_mu K_nu Pi^\mu\mu/k^2
 
 	//Parameters used to specifiy either the table is...
-	bool use_k_instead_of_kOverT;
+	bool use_k_instead_of_kOverT_for_table;
 	int number_of_points_in_kOverT;
 	int number_of_points_in_temp;
 	double min_temp, max_temp;
@@ -190,6 +200,7 @@ struct photonRate {
 
 		//Set some default values
 		rate_fit_function=0;
+		extra_normalisation_factor_function=0;
 		is_qgp=false;
 		is_hg=false;
 
