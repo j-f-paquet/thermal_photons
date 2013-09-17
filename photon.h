@@ -66,12 +66,12 @@ const int CONST_Nkt=20;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1)
 //const double kTdisc[3] = [0.2,4.0,0.2] //Discretization in kT: [kT min, kT max, delta kT]
 const int CONST_Nphi=16;  //phi
 //Rapidity
-const double CONST_etaMin=-0.0; //Minimum value for eta
-const double CONST_etaMax=0.0; //Maximum value for eta
-const int CONST_Neta=1;  //Warning: delta eta=(etaMax-etamin)/(Nkt-1)
+const double CONST_rapMin=-0.0; //Minimum value for rapidity
+const double CONST_rapMax=0.0; //Maximum value for rapidity
+const int CONST_Nrap=1;  //Warning: delta rap=(rapMax-rapmin)/(Nrap-1)
 
 //Deltas used for the (uniform) discretization of the grid
-const double CONST_delEta= CONST_Neta > 1 ? (CONST_etaMax-CONST_etaMin)/(CONST_Neta-1.0) : 0;
+const double CONST_delRap= CONST_Nrap > 1 ? (CONST_rapMax-CONST_rapMin)/(CONST_Nrap-1.0) : 0;
 const double CONST_delPhi=(2*M_PI)/(CONST_Nphi-1.0);
 const double CONST_delKt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
 
