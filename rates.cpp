@@ -13,6 +13,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 	double rate_qgp_ideal_LO_AMYfit(double, double, double);
 	double rate_qgp_ideal_born_AMYfit_with_cuts(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_qgp_viscous_only_born_g2_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2); 
+	double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160(double kOverT, double T, double kkPiOver_e_P_k2);
 	double k2_normalisation(double kOverT, double T, double kk);
 
 	void tabulate_fit(struct photonRate * currRate); 
@@ -232,6 +233,30 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 
 			load_rate_from_file(currRate);
 
+			break;
+
+		//rate_hg_ideal_Turbide_fit
+		case hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160:
+
+			currRate->name="rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160";
+			
+			currRate->is_hg=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=250;
+			currRate->min_temp=CONST_freezeout_T;
+			currRate->max_temp=CONST_pure_QGP_T;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=quadratic;
+			currRate->temp_discretization_type=quadratic;
+
+			tabulate_fit(currRate);
 			break;
 
 	}
@@ -808,11 +833,27 @@ double boseEin(double kOverT) {
 double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
 
 	//
-	double HadronicPhase(double E, double T, int process);
+	double rate_hg_ideal_Turbide_fit_piRho_a1PiRho_piGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piRho_omegatChan_piGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piPi_a1PiRho_rhoGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_rho_a1PiRho_piPiGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piKstar_KGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piK_KstarGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_rhoK_KGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_KKstar_piGamma(double E, double T);
+
+	const double E=kOverT*T;
 
 	double res=0.0;
 
-	for(int i=1; i<=8;i++) res+=HadronicPhase(kOverT*T, T, i);
+	res=rate_hg_ideal_Turbide_fit_piRho_a1PiRho_piGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_piRho_omegatChan_piGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_piPi_a1PiRho_rhoGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_rho_a1PiRho_piPiGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_piKstar_KGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_piK_KstarGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_rhoK_KGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_KKstar_piGamma(E,T);
 
 	return res;
 
@@ -838,40 +879,115 @@ double FFk(double E)
 	return pow(2.0/(2.0-tbar),2);
 }
 
-// Hadronic rate whitout viscosity
-
-double HadronicPhase(double E, double T, int process)
-{
-
-	double A2=0, A3=0, A4=0, A5=0, A6=0, A7=0, A8=0, A9=0;
-	switch (process) {
-		case 1:
-			A2 = pow(FFpion(E),4)*pow(T,2.8)*exp(-(1.461*pow(T,2.3094)+0.727)/pow(2*T*E,0.86) + (0.566*pow(T,1.4094)-0.9957)*E/T);
-			break;
-		case 2: 
-			A3 = pow(FFpion(E),4)*pow(T,-5)*exp(-(9.314*pow(T,-0.584)-5.328)*pow(2*T*E,0.088) + (0.3189*pow(T,0.721)-0.8998)*E/T);
-			break;
-		case 3:
-			A4 = pow(FFpion(E),4)*pow(T,-2)*exp(-(-35.459*pow(T,1.126)+18.827)/pow(2*E*T,-1.44*pow(T,0.142)+0.9996) -1.21*E/T);
-			break;
-		case 4:
-			A5 = pow(FFpion(E),4)*pow(T,3.75)*exp(-0.35/pow(2*T*E,1.05)+(2.3894*pow(T,0.03435)-3.222)*E/T);
-			break;
-		case 5:
-			A6 = pow(FFpion(E),4)*pow(T,-3)*exp(-(5.4018*pow(T,-0.6864) - 1.51)*pow(2*T*E,0.07) - 0.91*E/T);
-			break;
-		case 6:
-			A7 = pow(FFk(E),4)*pow(T,3.5)*exp(-(0.9386*pow(T,1.551)+0.634)/pow(2*T*E,1.01) + (0.568*pow(T,0.5397)-1.164)*E/T);
-			break;
-		case 7:
-			A8 = pow(FFk(E),4)*pow(T,3.7)*exp(-(6.096*pow(T,1.889)+1.0299)/pow(2*E*T,-1.613*pow(T,2.162)+0.975) -0.96*E/T);
-			break;
-		case 8: 
-			A9 = pow(FFw(E),4)*pow(T,1.0)*exp((1.865*pow(T,1.02)-2.6)/pow(2*E*T,0.62) + (3.053*pow(T,1.8)-1.038)*E/T );
-			break;
-	}
-	return (A2 + A3 + A4 + A5 + A6 + A7 + A8 + A9);
+// Hadronic rates whitout viscosity
+double rate_hg_ideal_Turbide_fit_piRho_a1PiRho_piGamma(double E, double T) {
+	return pow(FFpion(E),4)*pow(T,2.8)*exp(-(1.461*pow(T,2.3094)+0.727)/pow(2*T*E,0.86) + (0.566*pow(T,1.4094)-0.9957)*E/T);
 }
+
+double rate_hg_ideal_Turbide_fit_piRho_omegatChan_piGamma(double E, double T) {
+	return pow(FFw(E),4)*pow(T,1.0)*exp((1.865*pow(T,1.02)-2.6)/pow(2*E*T,0.62) + (3.053*pow(T,1.8)-1.038)*E/T );
+
+}
+
+double rate_hg_ideal_Turbide_fit_piPi_a1PiRho_rhoGamma(double E, double T) {
+	return pow(FFpion(E),4)*pow(T,-5)*exp(-(9.314*pow(T,-0.584)-5.328)*pow(2*T*E,0.088) + (0.3189*pow(T,0.721)-0.8998)*E/T);
+}
+
+double rate_hg_ideal_Turbide_fit_rho_a1PiRho_piPiGamma(double E, double T) {
+	return pow(FFpion(E),4)*pow(T,-2)*exp(-(-35.459*pow(T,1.126)+18.827)/pow(2*E*T,-1.44*pow(T,0.142)+0.9996) -1.21*E/T);
+
+}
+
+double rate_hg_ideal_Turbide_fit_piKstar_KGamma(double E, double T) {
+	return pow(FFpion(E),4)*pow(T,3.75)*exp(-0.35/pow(2*T*E,1.05)+(2.3894*pow(T,0.03435)-3.222)*E/T);
+}
+
+double rate_hg_ideal_Turbide_fit_piK_KstarGamma(double E, double T) {
+	return pow(FFpion(E),4)*pow(T,-3)*exp(-(5.4018*pow(T,-0.6864) - 1.51)*pow(2*T*E,0.07) - 0.91*E/T);
+}
+
+double rate_hg_ideal_Turbide_fit_rhoK_KGamma(double E, double T) {
+	return pow(FFk(E),4)*pow(T,3.5)*exp(-(0.9386*pow(T,1.551)+0.634)/pow(2*T*E,1.01) + (0.568*pow(T,0.5397)-1.164)*E/T);
+}
+
+double rate_hg_ideal_Turbide_fit_KKstar_piGamma(double E, double T) {
+	return pow(FFk(E),4)*pow(T,3.7)*exp(-(6.096*pow(T,1.889)+1.0299)/pow(2*E*T,-1.613*pow(T,2.162)+0.975) -0.96*E/T);
+}
+
+
+double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//
+	double rate_hg_ideal_Turbide_fit_piRho_a1PiRho_piGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piRho_omegatChan_piGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piPi_a1PiRho_rhoGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_rho_a1PiRho_piPiGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piKstar_KGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piK_KstarGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_rhoK_KGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_KKstar_piGamma(double E, double T);
+	double get_PH_chem_pot_pions_Tch160(double T); 
+	double get_PH_chem_pot_kaons_Tch160(double T);
+
+	const double E=kOverT*T;
+	
+	double res=0.0;
+	double muPion=get_PH_chem_pot_pions_Tch160(T);
+	double muKaon=get_PH_chem_pot_kaons_Tch160(T);
+	double muRho=2*muPion;
+	double muKstar=muPion+muKaon;
+	double expMuPionOverT=exp(muPion/T);
+	double expMuKaonOverT=exp(muKaon/T);
+	double expMuRhoOverT=exp(muRho/T);
+	double expMuKstarOverT=exp(muKstar/T);
+
+	res=rate_hg_ideal_Turbide_fit_piRho_a1PiRho_piGamma(E,T)*expMuPionOverT*expMuRhoOverT+ \
+	    rate_hg_ideal_Turbide_fit_piRho_omegatChan_piGamma(E,T)*expMuPionOverT*expMuRhoOverT+ \
+	    rate_hg_ideal_Turbide_fit_piPi_a1PiRho_rhoGamma(E,T)*expMuPionOverT*expMuPionOverT+ \
+	    rate_hg_ideal_Turbide_fit_rho_a1PiRho_piPiGamma(E,T)*expMuRhoOverT+ \
+	    rate_hg_ideal_Turbide_fit_piKstar_KGamma(E,T)*expMuPionOverT*expMuKstarOverT+ \
+	    rate_hg_ideal_Turbide_fit_piK_KstarGamma(E,T)*expMuPionOverT*expMuKaonOverT+ \
+	    rate_hg_ideal_Turbide_fit_rhoK_KGamma(E,T)*expMuRhoOverT*expMuKaonOverT+ \
+	    rate_hg_ideal_Turbide_fit_KKstar_piGamma(E,T)*expMuKaonOverT*expMuKstarOverT;
+
+	return res;
+
+}
+
+
+//pi, rho, K, K^*, but rho and K^* are actually unstable
+//Take T in GeV, return mu in GeV
+double get_PH_chem_pot_pions_Tch160(double T) {
+
+	//
+	double res;
+	
+	if (T>0.16) {
+		res=0.0;
+	}
+	else {
+		res=(0.13989273701516192 - 2.3597467055955885*T + 19.326406907950684*T*T - 62.7506772821009*T*T*T)/(1 - 10.758531025652175*T + 50.30650344070788*T*T); 
+	}
+
+	return res;
+
+}
+double get_PH_chem_pot_kaons_Tch160(double T) {
+
+	//
+	double res;
+	
+	if (T>0.16) {
+		res=0.0;
+	}
+	else {
+		res=(0.49039646786244145 - 6.445326572927662*T + 63.72787484481105*T*T - 266.31358950869026*T*T*T)/(1 - 5.345400242205774*T + 79.774948475777*T*T);
+	}
+
+	return res;
+
+}
+
 
 
 double k2_normalisation(double kOverT, double T, double kk) {

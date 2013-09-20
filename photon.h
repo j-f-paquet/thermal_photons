@@ -88,7 +88,8 @@ qgp_ideal_born_AMYfit_with_cuts,
 qgp_ideal_born_AMYfit_tabulated,
 qgp_viscous_only_born_g2_sqrtg,
 qgp_viscous_only_born_g2_sqrtg_table,
-qgp_viscous_only_born_g2_sqrtg_fit_tabulated
+qgp_viscous_only_born_g2_sqrtg_fit_tabulated,
+hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160
 };
 /****************************/
 //const enum rate_type CONST_rates_to_use[] = {qgp_ideal_born_AMYfit,qgp_ideal_born_KLS,hg_ideal_Turbide_fit,qgp_ideal_LO_AMYfit,qgp_ideal_born_AMYfit_with_cuts,qgp_ideal_born_AMY_table, qgp_ideal_born_AMYfit_tabulated};
@@ -104,7 +105,8 @@ qgp_ideal_born_AMYfit_with_cuts,
 qgp_ideal_born_AMYfit_tabulated,
 qgp_viscous_only_born_g2_sqrtg,
 qgp_viscous_only_born_g2_sqrtg_table,
-qgp_viscous_only_born_g2_sqrtg_fit_tabulated
+qgp_viscous_only_born_g2_sqrtg_fit_tabulated,
+hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160
 };
 //const int CONST_rates_to_use[] = {1,2,3,4,5,6};
 const int CONST_N_rates = sizeof(CONST_rates_to_use)/sizeof(int);
