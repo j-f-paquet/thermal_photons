@@ -306,7 +306,7 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 						const double pitautau=dtau_dt*dtau_dt*pitt+2*dtau_dt*dtau_dz*pitz+dtau_dz*dtau_dz*pizz;
 						const double pitaux=dtau_dt*pitx+dtau_dz*pixz;
 						const double pitauy=dtau_dt*pity+dtau_dz*piyz;
-						const double pitaueta=dtau_dt*deta_dt*pitt+2*dtau_dt*deta_dz*pitz+dtau_dz*deta_dz*pizz;
+						const double pitaueta=dtau_dt*deta_dt*pitt+(dtau_dt*deta_dz+dtau_dz*deta_dt)*pitz+dtau_dz*deta_dz*pizz;
 						const double pixeta=deta_dt*pitx+deta_dz*pixz;
 						const double piyeta=deta_dt*pity+deta_dz*piyz;
 						const double pietaeta=deta_dt*deta_dt*pitt+2*deta_dt*deta_dz*pitz+deta_dz*deta_dz*pizz;
