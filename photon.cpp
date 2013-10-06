@@ -120,7 +120,17 @@ bool spacetimeRead(bool binary, void * file, float T_and_boosts[]) {
 
 	//If binary
 	if (binary) {
-		elemRead=std::fread(&T_and_boosts,5*sizeof(float),5,(std::FILE *) file);
+		double T,qgpFrac,vx,vy,vz;
+		elemRead=std::fread(&T,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&qgpFrac,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&vx,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&vy,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&vz,sizeof(double),1,(std::FILE *) file);
+		T_and_boosts[0]=T;
+		T_and_boosts[1]=qgpFrac;
+		T_and_boosts[2]=vx;
+		T_and_boosts[3]=vy;
+		T_and_boosts[4]=vz;
 	}
 	else {
 		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f", &T_and_boosts[0], &T_and_boosts[1], &T_and_boosts[2], &T_and_boosts[3], &T_and_boosts[4]);
@@ -143,7 +153,27 @@ bool viscRead(bool binary, void * file, float visc_info[]) {
 
 	//If binary
 	if (binary) {
-		elemRead=std::fread(&visc_info,10*sizeof(float),10,(std::FILE *) file);
+		double Wtt, Wtx, Wty, Wtz, Wxx,Wxy,Wxz, Wyy, Wyz, Wzz;
+		elemRead= std::fread(&Wtt,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wtx,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wty,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wtz,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wxx,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wxy,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wxz,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wyy,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wyz,sizeof(double),1,(std::FILE *) file);
+		elemRead+=std::fread(&Wzz,sizeof(double),1,(std::FILE *) file);
+		visc_info[0]=Wtt;
+		visc_info[1]=Wtx;
+		visc_info[2]=Wty;
+		visc_info[3]=Wtz;
+		visc_info[4]=Wxx;
+		visc_info[5]=Wxy;
+		visc_info[6]=Wxz;
+		visc_info[7]=Wyy;
+		visc_info[8]=Wyz;
+		visc_info[9]=Wzz;
 	}
 	else {
 		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f %f %f %f %f %f", &visc_info[0], &visc_info[1], &visc_info[2], &visc_info[3], &visc_info[4], &visc_info[5], &visc_info[6], &visc_info[7], &visc_info[8], &visc_info[9]);
