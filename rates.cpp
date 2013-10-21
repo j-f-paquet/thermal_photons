@@ -14,7 +14,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 	double rate_qgp_ideal_born_AMYfit_with_cuts(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_qgp_viscous_only_born_g2_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2); 
 	double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160(double kOverT, double T, double kkPiOver_e_P_k2);
-	double k2_normalisation(double kOverT, double T, double kk);
+	double T2_normalisation(double kOverT, double T, double kk);
 
 	void tabulate_fit(struct photonRate * currRate); 
 	void load_rate_from_file(struct photonRate * currRate);
@@ -229,7 +229,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->kOverT_discretization_type=linear;
 			currRate->temp_discretization_type=linear;
 
-			currRate->extra_normalisation_factor_function=k2_normalisation;
+			currRate->extra_normalisation_factor_function=T2_normalisation;
 
 			load_rate_from_file(currRate);
 
@@ -338,7 +338,7 @@ void load_rate_from_file(struct photonRate * currRate) {
 	}
 }
 
-double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kHatkHatPiOver_e_P) {
+double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kOverTkOverTOver_e_P) {
 
 	//void get_photon_rate(int selector, double (**local_rate)(double, double, double));
 	double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk);
@@ -361,7 +361,7 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 
 	//Multiply by shear viscosity factor?
 	if (currRate->is_shear_viscous) {
-		res*=kHatkHatPiOver_e_P/2.0;
+		res*=kOverTkOverTOver_e_P/2.0;
 	}
 
 	//Only compute the rate, which is the slowest part of the calculation, if all the above factors are non-zero
@@ -377,16 +377,16 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 			else {
 				ku=kOverT;
 			}
-			res*=get_photon_rate_accel(currRate, ku, T, kHatkHatPiOver_e_P);
+			res*=get_photon_rate_accel(currRate, ku, T, kOverTkOverTOver_e_P);
 		}
 		//Use plain fit
 		else {
-			res*=(*(currRate->rate_fit_function))(kOverT,T,kHatkHatPiOver_e_P);
+			res*=(*(currRate->rate_fit_function))(kOverT,T,kOverTkOverTOver_e_P);
 		}
 
 
 		if (currRate->extra_normalisation_factor_function != 0) {
-			res*=(*(currRate->extra_normalisation_factor_function))(kOverT,T,kHatkHatPiOver_e_P);
+			res*=(*(currRate->extra_normalisation_factor_function))(kOverT,T,kOverTkOverTOver_e_P);
 		}
 
 
@@ -714,7 +714,7 @@ double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P
 //viscous correction to rate: A_\alpha\beta K^\alpha K^\beta/k^2 k A(k)/(2 pi)^3 * viscous_correction_born_JF_sqrtg()
 double rate_qgp_viscous_only_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2) {
 
-	double res = CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(-0.5041041126181884 + (-0.5335015716121183 + 1.9967643068761307*kOverT - 0.5616138941792664*kOverT*kOverT - 0.0009120108228910325*kOverT*kOverT*kOverT)/(1 - 2.607918425474197*kOverT - 0.8369709712322181*kOverT*kOverT))*pow(kOverT,2.1309931380115588);
+	double res = 1.0/(kOverT*kOverT)*CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(-0.5041041126181884 + (-0.5335015716121183 + 1.9967643068761307*kOverT - 0.5616138941792664*kOverT*kOverT - 0.0009120108228910325*kOverT*kOverT*kOverT)/(1 - 2.607918425474197*kOverT - 0.8369709712322181*kOverT*kOverT))*pow(kOverT,2.1309931380115588);
 	
 	return res;
 
@@ -729,7 +729,7 @@ double rate_qgp_viscous_only_born_g2_sqrtg(double kOverT, double T, double kkPiO
 
 	double res = 0.0;
 
-	if ((kOverT>kOverT_min)&&(kOverT<kOverT_max)) res=CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(0.295523 +(122.469 -713.728*kOverT+1034.67*kOverT*kOverT-1437.68*kOverT*kOverT*kOverT-650.401*kOverT*kOverT*kOverT*kOverT+562.913*kOverT*kOverT*kOverT*kOverT*kOverT+1.86032*kOverT*kOverT*kOverT*kOverT*kOverT*kOverT)/(1-155.427*kOverT+794.21*kOverT*kOverT-743.499*kOverT*kOverT*kOverT+910.294*kOverT*kOverT*kOverT*kOverT+109.401*kOverT*kOverT*kOverT*kOverT*kOverT))*pow(kOverT,0.797818);
+	if ((kOverT>kOverT_min)&&(kOverT<kOverT_max)) res=1.0/(kOverT*kOverT)*CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(0.295523 +(122.469 -713.728*kOverT+1034.67*kOverT*kOverT-1437.68*kOverT*kOverT*kOverT-650.401*kOverT*kOverT*kOverT*kOverT+562.913*kOverT*kOverT*kOverT*kOverT*kOverT+1.86032*kOverT*kOverT*kOverT*kOverT*kOverT*kOverT)/(1-155.427*kOverT+794.21*kOverT*kOverT-743.499*kOverT*kOverT*kOverT+910.294*kOverT*kOverT*kOverT*kOverT+109.401*kOverT*kOverT*kOverT*kOverT*kOverT))*pow(kOverT,0.797818);
 	
 	return res;
 
@@ -990,7 +990,7 @@ double get_PH_chem_pot_kaons_Tch160(double T) {
 
 
 
-double k2_normalisation(double kOverT, double T, double kk) {
-	const double res=kOverT*T;
+double T2_normalisation(double kOverT, double T, double kk) {
+	const double res=T;
 	return res*res;
 }

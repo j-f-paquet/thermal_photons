@@ -60,9 +60,9 @@ const std::string viscosityFile="evolution_Wmunu_over_epsilon_plus_P_xyeta.dat";
 
 //Discretization of photon spectrum
 //kT
-const double CONST_ktMin=0.2; //Minimum value for kT
-const double CONST_ktMax=4.0; //Maximum value for kT
-const int CONST_Nkt=20;  //Warning: delta kT=(ktMax-kTmin)/(Nkt-1) 
+const double CONST_kTMin=0.2; //Minimum value for kT
+const double CONST_kTMax=4.0; //Maximum value for kT
+const int CONST_NkT=20;  //Warning: delta kT=(kTMax-kTmin)/(NkT-1) 
 //const double kTdisc[3] = [0.2,4.0,0.2] //Discretization in kT: [kT min, kT max, delta kT]
 const int CONST_Nphi=16;  //phi
 //Rapidity
@@ -73,7 +73,7 @@ const int CONST_Nrap=1;  //Warning: delta rap=(rapMax-rapmin)/(Nrap-1)
 //Deltas used for the (uniform) discretization of the grid
 const double CONST_delRap= CONST_Nrap > 1 ? (CONST_rapMax-CONST_rapMin)/(CONST_Nrap-1.0) : 0;
 const double CONST_delPhi=(2*M_PI)/(CONST_Nphi-1.0);
-const double CONST_delKt=(CONST_ktMax-CONST_ktMin)/(CONST_Nkt-1.0);
+const double CONST_delKt=(CONST_kTMax-CONST_kTMin)/(CONST_NkT-1.0);
 
 /****** Available rates ******/
 enum rate_type {
@@ -148,7 +148,7 @@ struct phaseSpace_pos {
 	int itau, ix, iy, ieta;
 
 	//
-	int ikt, irap, iphi;
+	int ikT, irap, iphi;
 
 	//
 	//int iTauList;
