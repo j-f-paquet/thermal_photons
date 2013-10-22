@@ -339,16 +339,18 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 						//*shear_info+: 0   1   2   3   4   5   6   7   8   9
 						const double tau=curr_pos->tau;
 
-						const double ktau_over_T=kT*cosh(rap-curr_pos->eta)/T;
-						const double kx_over_T=kT*cosPhi/T;
-						const double ky_over_T=kT*sinPhi/T;
-						const double keta_over_T=kT*sinh(rap-curr_pos->eta)/tau/T;
+						const double ktau=kT*cosh(rap-curr_pos->eta);
+						const double kx=kT*cosPhi;
+						const double ky=kT*sinPhi;
+						const double keta=kT*sinh(rap-curr_pos->eta)/tau;
 
 						const double eta_of_pimunu_slice=0.0;
 						const double dtau_dt=cosh(eta_of_pimunu_slice);
 						const double deta_dt=-1.0*sinh(eta_of_pimunu_slice)/tau;
 						const double dtau_dz=-1.0*sinh(eta_of_pimunu_slice);
 						const double deta_dz=cosh(eta_of_pimunu_slice)/tau;
+
+						const double tau2=tau*tau;
 
 						const double pitautau=dtau_dt*dtau_dt*pitt+2*dtau_dt*dtau_dz*pitz+dtau_dz*dtau_dz*pizz;
 						const double pitaux=dtau_dt*pitx+dtau_dz*pixz;
@@ -358,7 +360,9 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 						const double piyeta=deta_dt*pity+deta_dz*piyz;
 						const double pietaeta=deta_dt*deta_dt*pitt+2*deta_dt*deta_dz*pitz+deta_dz*deta_dz*pizz;
 
-						kOverTkOverTOver_e_P=ktau_over_T*(ktau_over_T*pitautau-2*kx_over_T*pitaux-2*ky_over_T*pitauy-2*tau*tau*keta_over_T*pitaueta)+kx_over_T*(kx_over_T*pixx+2*ky_over_T*pixy+2*tau*tau*keta_over_T*pixeta)+ky_over_T*(ky_over_T*piyy+2*tau*tau*keta_over_T*piyeta)+tau*tau*tau*tau*keta_over_T*keta_over_T*pietaeta;
+						kOverTkOverTOver_e_P=ktau*(ktau*pitautau-2*kx*pitaux-2*ky*pitauy-2*tau2*keta*pitaueta)+kx*(kx*pixx+2*ky*pixy+2*tau2*keta*pixeta)+ky*(ky*piyy+2*tau2*keta*piyeta)+tau2*tau2*keta*keta*pietaeta;
+
+						kOverTkOverTOver_e_P/=T*T;
 
 					}
 
