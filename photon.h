@@ -47,7 +47,7 @@ const double CONST_cellsize_Eta=MUSIC_deta; //In units of rapidity
 const double CONST_tau0=MUSIC_tau0;
 const double CONST_effective_dTau=MUSIC_effective_dtau;
 
-const bool CONST_boost_invariant=1;
+const bool CONST_boost_invariant=0;
 const int CONST_nb_steps_eta_integration=30;
 const double CONST_max_eta_integration=3.0;
 
