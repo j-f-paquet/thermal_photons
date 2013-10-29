@@ -565,13 +565,20 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 
 			if (fabs(rap) <= CONST_midRapCut) {
 				iRapmin=irap;
+				break;
+			}
+		
+		}
+		for(int irap=iRapmin;irap<CONST_Nrap; irap++) {
+
+			rap=CONST_rapMin+irap*CONST_delRap;	
+
+			if (rap <= CONST_midRapCut) {
 				iRapmax=irap;
 			}
-			else if (fabs(rap) > CONST_midRapCut) {
-				//iRapmax=irap-1;
-				continue;
+			else {
+				break;
 			}
-			else iRapmax=irap;
 		
 		}
 
@@ -618,6 +625,9 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 							yFac=1.0;
 						}
 						//Let's use a simple midpoint rule for now
+						else if ((iRapmin == irap)||(iRapmax == irap))  {
+							yFac=0.5*CONST_delRap;
+						}
 						else {
 							yFac=CONST_delRap;
 						}
