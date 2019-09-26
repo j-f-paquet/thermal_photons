@@ -28,16 +28,17 @@ void photon_prod(const struct photonRate rate_list[]) {
 	//Forward declaration of functions
 	void openFileRead(bool binary, std::string filename, void ** pointer);
 	bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
-	bool viscRead(bool binary, void * file, float visc_info[]);
+	bool viscRead(bool binary, void * shearFile, void * bulkFile, float visc_info[]);
 	void update_position_info(int line, struct phaseSpace_pos *curr_pos);
 	void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
 	void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
 
 	//Variables
-	float T_and_boosts[5], visc_info[10];
-	bool read_T_flag, read_visc_flag; //Result of reading of the file
+	float T_and_boosts[5], visc_info[13];
+	bool read_T_flag, read_visc_flag=true; //Result of reading of the file
 	std::FILE * stFile; //Spacetime file
-	std::FILE * viscFile; //Spacetime file
+	std::FILE * shearViscFile; //Shear viscosity file
+	std::FILE * bulkViscFile; //Bulk viscosity file
 	//double tau;
 	int line=1; //Spacetime position inferred from line number
 	struct phaseSpace_pos curr_pos;
@@ -57,17 +58,22 @@ void photon_prod(const struct photonRate rate_list[]) {
 
 	//Open spacetime grid file
 	openFileRead(CONST_binaryMode, stGridFile, (void **) &stFile);
-	if (CONST_with_viscosity) openFileRead(CONST_binaryMode, viscosityFile, (void **) &viscFile);
+	if (CONST_with_viscosity) {
+		if (CONST_with_shear_viscosity) openFileRead(CONST_binaryMode, shearViscosityFile, (void **) &shearViscFile);
+		if (CONST_with_bulk_viscosity) openFileRead(CONST_binaryMode, bulkViscosityFile, (void **) &bulkViscFile);
+	}
 
 	//Read the first line of the spacetime grid
 	read_T_flag=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
-	if (CONST_with_viscosity) read_visc_flag=viscRead(CONST_binaryMode, viscFile, visc_info);
+	if (CONST_with_viscosity) {
+		read_visc_flag=viscRead(CONST_binaryMode, shearViscFile, bulkViscFile, visc_info);
+	}
 	//Loop over the rest of the file
-	while ((read_T_flag)&&((!CONST_with_viscosity)||(read_visc_flag && CONST_with_viscosity))) {
+	while ((read_T_flag)&&(read_visc_flag)) {
 
 		//std::cout << "Line " << line << "=Position (itau,ix,iy,ieta)=(" << curr_pos.itau << "," << curr_pos.ix << "," << curr_pos.iy << "," << curr_pos.ieta << ")\n";
-
-		if (T_and_boosts[0]>=CONST_freezeout_T) {
+		
+		if ((curr_pos.itau%2!=0)&&(T_and_boosts[0]>=CONST_freezeout_T)) {
 			pre_computeDescretizedSpectrum(&curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
 		}
 		//Compute (tau,x,y,eta) from line number
@@ -75,18 +81,21 @@ void photon_prod(const struct photonRate rate_list[]) {
 
 		//Try to read the next line
 		read_T_flag=spacetimeRead(CONST_binaryMode, stFile, T_and_boosts);
-		if (CONST_with_viscosity) read_visc_flag=viscRead(CONST_binaryMode, viscFile, visc_info);
+		if (CONST_with_viscosity) read_visc_flag=viscRead(CONST_binaryMode, shearViscFile, bulkViscFile, visc_info);
 		line+=1;
 
 	}
 
-	if ((!std::feof(stFile))||((CONST_with_viscosity)&&(!std::feof(viscFile)))) {
+	if ((!std::feof(stFile))||((CONST_with_viscosity)&&(!std::feof(shearViscFile)))) {
 		std::cout << "!!!!!!!!!!!!!!! Warning !!!!!!!!!!!!!!!!!! Stopped reading the evolution files before the end of the file!\n";	
 	}
 
 	//Close spacetime grid file
 	std::fclose(stFile);
-	if (CONST_with_viscosity) std::fclose(viscFile);
+	if (CONST_with_viscosity) {
+		if (CONST_with_shear_viscosity) std::fclose(shearViscFile);
+		if (CONST_with_bulk_viscosity) std::fclose(bulkViscFile);
+	}
 
 	//Compute observables from the discretized photon spectra
 	compute_observables(rate_list, discSpectra);
@@ -120,12 +129,12 @@ bool spacetimeRead(bool binary, void * file, float T_and_boosts[]) {
 
 	//If binary
 	if (binary) {
-		double T,qgpFrac,vx,vy,vz;
-		elemRead=std::fread(&T,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&qgpFrac,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&vx,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&vy,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&vz,sizeof(double),1,(std::FILE *) file);
+		float T,qgpFrac,vx,vy,vz;
+		elemRead=std::fread(&T,sizeof(float),1,(std::FILE *) file);
+		elemRead+=std::fread(&qgpFrac,sizeof(float),1,(std::FILE *) file);
+		elemRead+=std::fread(&vx,sizeof(float),1,(std::FILE *) file);
+		elemRead+=std::fread(&vy,sizeof(float),1,(std::FILE *) file);
+		elemRead+=std::fread(&vz,sizeof(float),1,(std::FILE *) file);
 		T_and_boosts[0]=T;
 		T_and_boosts[1]=qgpFrac;
 		T_and_boosts[2]=vx;
@@ -147,46 +156,63 @@ bool spacetimeRead(bool binary, void * file, float T_and_boosts[]) {
 }
 
 //Read file with info about viscous hydro 
-bool viscRead(bool binary, void * file, float visc_info[]) {
+bool viscRead(bool binary, void * shearFile, void * bulkFile, float visc_info[]) {
 
-	int elemRead;
+	int shearElemRead, bulkElemRead;
+	float Wtt=0.0, Wtx=0.0, Wty=0.0, Wtz=0.0, Wxx=0.0,Wxy=0.0,Wxz=0.0, Wyy=0.0, Wyz=0.0, Wzz=0.0;
+	float bulk_pressure=0.0, eps_plus_P=0.0, cs2=0.0;
+	bool return_value=true;
 
 	//If binary
 	if (binary) {
-		double Wtt, Wtx, Wty, Wtz, Wxx,Wxy,Wxz, Wyy, Wyz, Wzz;
-		elemRead= std::fread(&Wtt,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wtx,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wty,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wtz,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wxx,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wxy,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wxz,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wyy,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wyz,sizeof(double),1,(std::FILE *) file);
-		elemRead+=std::fread(&Wzz,sizeof(double),1,(std::FILE *) file);
-		visc_info[0]=Wtt;
-		visc_info[1]=Wtx;
-		visc_info[2]=Wty;
-		visc_info[3]=Wtz;
-		visc_info[4]=Wxx;
-		visc_info[5]=Wxy;
-		visc_info[6]=Wxz;
-		visc_info[7]=Wyy;
-		visc_info[8]=Wyz;
-		visc_info[9]=Wzz;
+		if (CONST_with_shear_viscosity) {
+			shearElemRead= std::fread(&Wtt,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wtx,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wty,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wtz,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wxx,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wxy,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wxz,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wyy,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wyz,sizeof(float),1,(std::FILE *) shearFile);
+			shearElemRead+=std::fread(&Wzz,sizeof(float),1,(std::FILE *) shearFile);
+			if (shearElemRead != 10) return_value=false;
+		}
+		if (CONST_with_bulk_viscosity) {
+			bulkElemRead=std::fread(&bulk_pressure,sizeof(float),1,(std::FILE *) bulkFile);
+			bulkElemRead+=std::fread(&eps_plus_P,sizeof(float),1,(std::FILE *) bulkFile);
+			bulkElemRead+=std::fread(&cs2,sizeof(float),1,(std::FILE *) bulkFile);
+			if (bulkElemRead != 3) return_value=false;
+		}
 	}
 	else {
-		elemRead=std::fscanf((std::FILE *) file, "%f %f %f %f %f %f %f %f %f %f", &visc_info[0], &visc_info[1], &visc_info[2], &visc_info[3], &visc_info[4], &visc_info[5], &visc_info[6], &visc_info[7], &visc_info[8], &visc_info[9]);
+		if (CONST_with_shear_viscosity) {
+			//shearElemRead=std::fscanf((std::FILE *) shearFile, "%f %f %f %f %f %f %f %f %f %f", &visc_info[0], &visc_info[1], &visc_info[2], &visc_info[3], &visc_info[4], &visc_info[5], &visc_info[6], &visc_info[7], &visc_info[8], &visc_info[9]);
+			shearElemRead=std::fscanf((std::FILE *) shearFile, "%f %f %f %f %f %f %f %f %f %f", &Wtt, &Wtx, &Wty, &Wtz, &Wxx, &Wxy, &Wxz, &Wyy, &Wyz, &Wzz);
+			if (shearElemRead != 10) return_value=false;
+		}
+		if (CONST_with_bulk_viscosity) {
+			bulkElemRead=std::fscanf((std::FILE *) bulkFile, "%f %f %f", &bulk_pressure, &eps_plus_P, &cs2);
+			if (bulkElemRead != 3) return_value=false;
+		}
 	}
 
-	//If fscanf couldn't read the ten elements, it's the end of the file or there's a problem
-	if (elemRead != 10) {
-		return 0;
-	}
-	else {
-		return 1;
-	}
+	visc_info[0]=Wtt;
+	visc_info[1]=Wtx;
+	visc_info[2]=Wty;
+	visc_info[3]=Wtz;
+	visc_info[4]=Wxx;
+	visc_info[5]=Wxy;
+	visc_info[6]=Wxz;
+	visc_info[7]=Wyy;
+	visc_info[8]=Wyz;
+	visc_info[9]=Wzz;
+	visc_info[10]=bulk_pressure;
+	visc_info[11]=eps_plus_P;
+	visc_info[12]=cs2;
 
+	//
+	return return_value;
 }
 
 
@@ -212,7 +238,7 @@ void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and
 			ux=T_and_boosts[2]*old_u0;
 			uy=T_and_boosts[3]*old_u0;
 
-			//Integrate in eta with Simpsons
+			//Integrate in eta with trapezoidal method, using the symmetry around 0 to potentially speed-up the convergence
 			//Integrate in eta
 			for(int j=0;j<=integration_step;j++) {
 				eta=-1*CONST_max_eta_integration+j*delta_eta;
@@ -223,13 +249,13 @@ void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and
 
 				curr_pos->eta=eta;
 				if ((0 == j)||(integration_step == j)) {
-					curr_pos->w_eta=delta_eta/3.0;
+					curr_pos->w_eta=delta_eta/2.0;
 				}
 				else if (j%2 == 0) {
-					curr_pos->w_eta=delta_eta*2.0/3.0;
+					curr_pos->w_eta=delta_eta;
 				}
 				else {
-					curr_pos->w_eta=delta_eta*4.0/3.0;
+					curr_pos->w_eta=delta_eta;
 				}
 
 				computeDescretizedSpectrum(curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
@@ -244,7 +270,7 @@ void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and
 void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
 	
 	//Forward declaration
-	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
+	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
 
 	//Local variables
 	double gamma;
@@ -272,6 +298,16 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 	const double piyz=visc_info[8];
 	const double pizz=visc_info[9];
 
+	const double bulk_pressure=visc_info[10];
+	const double eps_plus_P=visc_info[11];
+	const double cs2=visc_info[12];
+
+	//pre-tabulate for speed
+	double cosPhiArray[CONST_Nphi];
+	for(int i=0; i<CONST_Nphi;i++) cosPhiArray[i]=cos(i*CONST_delPhi);
+
+	double sinPhiArray[CONST_Nphi];
+	for(int i=0; i<CONST_Nphi;i++) sinPhiArray[i]=sin(i*CONST_delPhi);
 
 	//Pre-compute gamma for efficiency
 	gamma=1.0/sqrt(1-(betax*betax+betay*betay+betaz*betaz));
@@ -299,12 +335,14 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 
 				phi=iphi*CONST_delPhi;	
 
-				cosPhi=cos(phi);
-				sinPhi=sin(phi);
+				//cosPhi=cos(phi);
+				//sinPhi=sin(phi);
+				cosPhi=cosPhiArray[iphi];
+				sinPhi=sinPhiArray[iphi];
 
 
 				//Evaluate (A_L)_{alpha beta} \hat{k}_L^alpha \alpha{k}_L^beta
-				if (CONST_with_viscosity) {
+				if (CONST_with_viscosity&&CONST_with_shear_viscosity) {
 					//shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
 					//*shear_info+: 0   1   2   3   4   5   6   7   8   9
 					//K=(kT cosh(y), kT cos(phi), kT sin(phi), kT sinh(y))
@@ -397,7 +435,7 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 				curr_pos->ikT=ikT;
 				curr_pos->iphi=iphi;
 				curr_pos->irap=irap;
-				fill_grid(curr_pos, kR, T, kOverTkOverTOver_e_P, rate_list,discSpectra);	
+				fill_grid(curr_pos, kR, T, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2, rate_list,discSpectra);	
 
 
 			}
@@ -409,11 +447,11 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 //Discretized spectra: array[times][Nrap][Nphi][Npt][rates]
 //Discretized spectra, version 2: array[times][Nrap][Nphi][Npt][rates][value_and_remainder]
 //stPos=[tau, irap, iphi, ikT]
-void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOverTkOverTOver_e_P, const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
+void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
 
 	//
 	double QGP_fraction(double T);
-	double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kkPiOver_e_P_k2); 
+	double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kkPiOver_e_P_k2, double bulk_pressure, double eps_plus_P, double cs2); 
 
 	//
 	int irap=curr_pos->irap;
@@ -437,7 +475,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOve
 
 		//get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
 
-		tmpRate=eval_photon_rate(&rate_list[iRate],kR/T,T,kOverTkOverTOver_e_P);
+		tmpRate=eval_photon_rate(&rate_list[iRate],kR/T,T,kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2);
 
 //		//Either use the fits directly or a table made from the fits
 //		if (CONST_use_accel_rates[CONST_rates_to_use[iRate]-1]) {
@@ -452,7 +490,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOve
 		//tmpRate*=QGP_fraction(T);
 
 		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
-		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*tmp_cellsize_eta*CONST_effective_dTau*curr_pos->tau;
+		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*tmp_cellsize_eta*2*CONST_effective_dTau*curr_pos->tau;
 
 		//Fill value
 		discSpectra[irap][iphi][ikT][1][iRate]+=tmpRate;
@@ -529,7 +567,7 @@ void compute_observables(const struct photonRate rate_list[], double discSpectra
 void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
 
 	double kT, rap, phi, yFac, rap_interval;
-	double yield, vn[CONST_FourierNb];
+	double yield, vn_sin[CONST_FourierNb], vn_cos[CONST_FourierNb];
 	int iRapmin=0, iRapmax;
 	bool exact_midrap=false, bad_rap_discret = false;
 
@@ -553,7 +591,8 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 		//Output result
 		outfile << "#pt" << "\t" << "yield";
 		for(int j=1;j<=CONST_FourierNb; j++) {
-			outfile	<< "\tyield*vn[" << j << "]\tvn[" << j << "]";
+			//outfile	<< "\tyield*vn[" << j << "]\tvn[" << j << "]";
+			outfile	<< "\tyield*vn_cos[" << j << "]\t yield*vn_sin[" << j << "]";
 		}
 		outfile<< "\n";
 			
@@ -565,20 +604,13 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 
 			if (fabs(rap) <= CONST_midRapCut) {
 				iRapmin=irap;
-				break;
-			}
-		
-		}
-		for(int irap=iRapmin;irap<CONST_Nrap; irap++) {
-
-			rap=CONST_rapMin+irap*CONST_delRap;	
-
-			if (rap <= CONST_midRapCut) {
 				iRapmax=irap;
 			}
-			else {
-				break;
+			else if (fabs(rap) > CONST_midRapCut) {
+				//iRapmax=irap-1;
+				continue;
 			}
+			else iRapmax=irap;
 		
 		}
 
@@ -606,7 +638,8 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 				//Will contain the results of the phi integration and rapidity averaging
 				yield=0.0;
 				for(int i=1;i<=CONST_FourierNb; i++) {
-					vn[i]=0;
+					vn_sin[i-1]=0;
+					vn_cos[i-1]=0;
 				}
 
 				kT=CONST_kTMin+ikT*CONST_delKt;	
@@ -625,9 +658,6 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 							yFac=1.0;
 						}
 						//Let's use a simple midpoint rule for now
-						else if ((iRapmin == irap)||(iRapmax == irap))  {
-							yFac=0.5*CONST_delRap;
-						}
 						else {
 							yFac=CONST_delRap;
 						}
@@ -636,7 +666,8 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 						//tmpIntRes+=phiFac*yFac*particleList[j].dNdydptdphi[iy][ipt][iphi];
 						yield+=discSpectra[irap][iphi][ikT][1][rate_no]*yFac;
 						for(int i=1;i<=CONST_FourierNb; i++) {
-							vn[i]+=yFac*discSpectra[irap][iphi][ikT][1][rate_no]*cos(i*phi);
+							vn_cos[i-1]+=yFac*discSpectra[irap][iphi][ikT][1][rate_no]*cos(i*phi);
+							vn_sin[i-1]+=yFac*discSpectra[irap][iphi][ikT][1][rate_no]*sin(i*phi);
 						}
 						
 					}
@@ -647,13 +678,15 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 				//(to yield an average instead of an integral)
 				yield*=CONST_delPhi/rap_interval/(2.0*M_PI);
 				for(int j=1;j<=CONST_FourierNb; j++) {
-					vn[j]*=CONST_delPhi/rap_interval/(2.0*M_PI);
+					vn_sin[j-1]*=CONST_delPhi/rap_interval/(2.0*M_PI);
+					vn_cos[j-1]*=CONST_delPhi/rap_interval/(2.0*M_PI);
 				}
 
 				//Output result
 				outfile << kT << "\t" << yield;
 				for(int j=1;j<=CONST_FourierNb; j++) {
-					outfile	<< "\t" << vn[j] << "\t" << vn[j]/yield;
+					//outfile	<< "\t" << vn[j] << "\t" << vn[j]/yield;
+					outfile	<< "\t" << vn_cos[j-1] << "\t" << vn_sin[j-1];
 				}
 				outfile<< "\n";
 

@@ -13,8 +13,22 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 	double rate_qgp_ideal_LO_AMYfit(double, double, double);
 	double rate_qgp_ideal_born_AMYfit_with_cuts(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_qgp_viscous_only_born_g2_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2); 
+	double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch150(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch165(double kOverT, double T, double kkPiOver_e_P_k2);
 	double T2_normalisation(double kOverT, double T, double kk);
+	double minus_sign_normalisation(double kOverT, double T, double kk);
+	double rate_qgp_viscous_only_born_g2_sqrtg_fit2(double kOverT, double T, double kkPiOver_e_P_k2); 
+	double rate_qgp_viscous_only_born_g2_sqrtg_new_deltaf(double kOverT, double T, double kkPiOver_e_P_k2); 
+	double rate_qgp_viscous_only_born_g2_sqrtg_new_deltaf_cuts(double kOverT, double T, double kkPiOver_e_P_k2); 
+	double rate_qgp_viscous_only_born_g2_sqrtg_new_deltaf_fit2(double kOverT, double T, double kkPiOver_e_P_k2); 
+	double rate_qgp_ideal_Dusling(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_shear_viscous_Dusling(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_qgp_bulk_viscous_Dusling(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_in_medium_rho_ideal_Rapp_fit(double kOverT, double T, double kkPiOver_e_P_k2); 
+	double rate_hg_ideal_Turbide_noPiPi_fit(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_pion_brem_ideal_Rapp_fit(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_ideal_Zahed_Dusling_2pi_fit(double kOverT, double T, double kkPiOver_e_P_k2);
 
 	void tabulate_fit(struct photonRate * currRate); 
 	void load_rate_from_file(struct photonRate * currRate);
@@ -93,10 +107,101 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->is_qgp=true;
 
 			currRate->use_table_instead_of_fit=false;
-			currRate->tabulate_fit_for_speed=false;
+			currRate->tabulate_fit_for_speed=true;
 			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit;
 
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=300;
+			currRate->min_temp=CONST_pure_HG_T;
+			currRate->max_temp=1.;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
 			break;
+
+		//
+		case qgp_ideal_Dusling:
+			
+			currRate->name="rate_qgp_ideal_Dusling";
+			
+			currRate->is_qgp=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_qgp_ideal_Dusling;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=300;
+			currRate->min_temp=CONST_pure_HG_T;
+			currRate->max_temp=1.;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
+			break;
+
+		//
+		case qgp_shear_viscous_Dusling:
+			
+			currRate->name="rate_qgp_shear_viscous_Dusling";
+			
+			currRate->is_qgp=true;
+			currRate->is_shear_viscous=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_qgp_shear_viscous_Dusling;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=300;
+			currRate->min_temp=CONST_pure_HG_T;
+			currRate->max_temp=1.;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
+			break;
+
+		//
+		case qgp_bulk_viscous_Dusling:
+			
+			currRate->name="rate_qgp_bulk_viscous_Dusling";
+			
+			currRate->is_qgp=true;
+			currRate->is_bulk_viscous=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_qgp_bulk_viscous_Dusling;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=300;
+			currRate->min_temp=CONST_pure_HG_T;
+			currRate->max_temp=1.;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
+			break;
+
+
 
 		//rate_qgp_ideal_born_KLS
 		case qgp_ideal_born_KLS:
@@ -153,8 +258,8 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=CONST_pure_QGP_T;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=quadratic;
-			currRate->temp_discretization_type=quadratic;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -167,8 +272,20 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->is_qgp=true;
 
 			currRate->use_table_instead_of_fit=false;
-			currRate->tabulate_fit_for_speed=false;
+			currRate->tabulate_fit_for_speed=true;
 			currRate->rate_fit_function=rate_qgp_ideal_LO_AMYfit;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=300;
+			currRate->min_temp=CONST_pure_HG_T;
+			currRate->max_temp=1.;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
 			break;
 
 		case qgp_viscous_only_born_g2_sqrtg:
@@ -179,13 +296,26 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->is_shear_viscous=true;
 
 			currRate->use_table_instead_of_fit=false;
-			currRate->tabulate_fit_for_speed=false;
+			currRate->tabulate_fit_for_speed=true;
 			currRate->rate_fit_function=rate_qgp_viscous_only_born_g2_sqrtg;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=300;
+			currRate->min_temp=CONST_pure_HG_T;
+			currRate->max_temp=1.;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
 			break;
 
 		case qgp_viscous_only_born_g2_sqrtg_fit_tabulated:
 			
-			currRate->name="qgp_viscous_only_born_g2_sqrtg_fit_tabulated";
+			currRate->name="rate_qgp_viscous_only_born_g2_sqrtg_fit_tabulated";
 			
 			currRate->is_qgp=true;
 			currRate->is_shear_viscous=true;
@@ -210,7 +340,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 
 		case qgp_viscous_only_born_g2_sqrtg_table:
 			
-			currRate->name="qgp_viscous_only_born_g2_sqrtg_table";
+			currRate->name="rate_qgp_viscous_only_born_g2_sqrtg_table";
 			
 			currRate->is_qgp=true;
 			currRate->is_shear_viscous=true;
@@ -236,6 +366,30 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			break;
 
 		//rate_hg_ideal_Turbide_fit
+		case hg_ideal_Turbide_fit_chem_pot_Boltz_Tch150:
+
+			currRate->name="rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch150";
+			
+			currRate->is_hg=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch150;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=250;
+			currRate->min_temp=CONST_freezeout_T;
+			currRate->max_temp=CONST_pure_QGP_T;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+			break;
+
+		//rate_hg_ideal_Turbide_fit
 		case hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160:
 
 			currRate->name="rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160";
@@ -253,10 +407,366 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=CONST_pure_QGP_T;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=quadratic;
-			currRate->temp_discretization_type=quadratic;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
+			break;
+
+		//rate_hg_ideal_Turbide_fit
+		case hg_ideal_Turbide_fit_chem_pot_Boltz_Tch165:
+
+			currRate->name="rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch165";
+			
+			currRate->is_hg=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch165;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=250;
+			currRate->min_temp=CONST_freezeout_T;
+			currRate->max_temp=CONST_pure_QGP_T;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
+			break;
+
+		case hg_ideal_Chun_table_CE:
+			
+			currRate->name="rate_hg_ideal_Chun_table_CE";
+			
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+
+			currRate->use_table_instead_of_fit=true;
+			currRate->tabulate_fit_for_speed=false;
+
+			currRate->filename_of_external_table="./chun_eqrate_photon_rate_CE.dat";
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=81;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.05;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			load_rate_from_file(currRate);
+
+			break;
+
+		case hg_viscous_Chun_table_CE:
+			
+			currRate->name="rate_hg_viscous_Chun_table_CE";
+			
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=true;
+
+			currRate->use_table_instead_of_fit=true;
+			currRate->tabulate_fit_for_speed=false;
+
+			currRate->filename_of_external_table="./chun_shear_photon_rate_CE.dat";
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=81;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.05;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			currRate->extra_normalisation_factor_function=T2_normalisation;
+
+			load_rate_from_file(currRate);
+
+			break;
+
+		case hg_ideal_Chun_table_PCE165:
+			
+			currRate->name="rate_hg_ideal_Chun_table_PCE165";
+			
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+
+			currRate->use_table_instead_of_fit=true;
+			currRate->tabulate_fit_for_speed=false;
+
+			currRate->filename_of_external_table="./rate_HG_2to2_total_eqrate_PCE165.dat";
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			load_rate_from_file(currRate);
+
+			break;
+
+		case hg_viscous_Chun_table_PCE165:
+			
+			currRate->name="rate_hg_viscous_Chun_table_PCE165";
+			
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=true;
+
+			currRate->use_table_instead_of_fit=true;
+			currRate->tabulate_fit_for_speed=false;
+
+			currRate->filename_of_external_table="./rate_HG_2to2_total_viscous_PCE165.dat";
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			currRate->extra_normalisation_factor_function=T2_normalisation;
+
+			load_rate_from_file(currRate);
+
+			break;
+
+		case hg_bulk_Chun_table_CE:
+			
+			currRate->name="rate_hg_bulk_Chun_table_CE";
+			
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+			currRate->is_bulk_viscous=true;
+
+			currRate->use_table_instead_of_fit=true;
+			currRate->tabulate_fit_for_speed=false;
+
+			currRate->filename_of_external_table="./chun_bulk_photon_rate_CE.dat";
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=81;
+			currRate->number_of_points_in_temp=75;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.248;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.05;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			//currRate->extra_normalisation_factor_function=minus_sign_normalisation;
+
+			load_rate_from_file(currRate);
+
+			break;
+
+		case hg_bulk_Chun_table_CE_eos_transport:
+			
+			currRate->name="rate_hg_bulk_Chun_table_CE_eos_transport";
+			
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+			currRate->is_bulk_viscous=true;
+
+			currRate->use_table_instead_of_fit=true;
+			currRate->tabulate_fit_for_speed=false;
+
+			currRate->filename_of_external_table="./chun_bulk_photon_rate_CE_eos_transport.dat";
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=81;
+			currRate->number_of_points_in_temp=75;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.248;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.05;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			//currRate->extra_normalisation_factor_function=minus_sign_normalisation;
+
+			load_rate_from_file(currRate);
+
+			break;
+
+//		case hg_bulk_Chun_table_PCE165:
+//			
+//			currRate->name="rate_hg_bulk_Chun_table_PCE165";
+//			
+//			currRate->is_hg=true;
+//			currRate->is_shear_viscous=false;
+//			currRate->is_bulk_viscous=true;
+//
+//			currRate->use_table_instead_of_fit=true;
+//			currRate->tabulate_fit_for_speed=false;
+//
+//			currRate->filename_of_external_table="./chun_bulk_photon_rate_PCE165.dat";
+//			currRate->use_k_instead_of_kOverT_for_table=true;
+//			currRate->number_of_points_in_kOverT=81;
+//			currRate->number_of_points_in_temp=76;
+//			currRate->min_temp=0.1;
+//			currRate->max_temp=0.25;
+//			currRate->min_kOverT=0.05;
+//			currRate->max_kOverT=4.05;
+//			currRate->kOverT_discretization_type=linear;
+//			currRate->temp_discretization_type=linear;
+//
+//			//currRate->extra_normalisation_factor_function=T2_normalisation;
+//
+//			load_rate_from_file(currRate);
+//
+//			break;
+
+		//rate_hg_ideal_Turbide_fit
+		case hg_ideal_Turbide_fit_tabulated:
+
+			currRate->name="rate_hg_ideal_Turbide_fit_tabulated";
+
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_ideal_Turbide_fit;
+
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+			break;
+
+
+		//rate_hg_ideal_Turbide_fit
+		case hg_ideal_Turbide_fit_noPiPi_tabulated:
+
+			currRate->name="rate_hg_ideal_Turbide_fit_noPiPi_tabulated";
+
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_ideal_Turbide_noPiPi_fit;
+
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+			break;
+
+		//rate_hg_ideal_Turbide_fit
+		case hg_in_medium_rho_ideal_Rapp_fit_tabulated:
+
+			currRate->name="rate_hg_in_medium_rho_ideal_Rapp_fit_tabulated";
+
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_in_medium_rho_ideal_Rapp_fit;
+
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=150;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.22;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+			break;
+
+
+
+		//rate pions bremstralung
+		case hg_pion_brem_ideal_Rapp_fit_tabulated:
+
+			currRate->name="rate_hg_pion_brem_ideal_Rapp_fit_tabulated";
+
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_pion_brem_ideal_Rapp_fit;
+
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=150;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.22;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+			break;
+
+
+		//rate pions bremstralung
+		case hg_ideal_Zahed_Dusling_2pi_fit_tabulated:
+
+			currRate->name="rate_hg_ideal_Zahed_Dusling_2pi_fit_tabulated";
+
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_ideal_Zahed_Dusling_2pi_fit;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=500;
+			currRate->number_of_points_in_temp=250;
+			currRate->min_temp=CONST_freezeout_T;
+			currRate->max_temp=CONST_pure_QGP_T;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
+
+			break;
+
+		case qgp_viscous_only_born_g2_sqrtg_new_deltaf:
+			
+			currRate->name="rate_qgp_viscous_only_born_g2_sqrtg_new_deltaf";
+			
+			currRate->is_qgp=true;
+			currRate->is_shear_viscous=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=false;
+			currRate->rate_fit_function=rate_qgp_viscous_only_born_g2_sqrtg_new_deltaf;
 			break;
 
 	}
@@ -282,10 +792,12 @@ void tabulate_fit(struct photonRate * currRate) {
 			const int size_y=currRate->number_of_points_in_temp;
 
 			currRate->tabulated_rate = new double * [size_y];	
+			currRate->tabulated_rate_log = new double * [size_y];	
 
 			for(int k=0; k<size_y;k++) {
 				const double temp=interp_x_from_index(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,k,currRate->number_of_points_in_temp);
 				currRate->tabulated_rate[k] = new double [size_x];	
+				currRate->tabulated_rate_log[k] = new double [size_x];	
 				for(int j=0; j<size_x;j++) {
 					const double ku=interp_x_from_index(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,j,currRate->number_of_points_in_kOverT);
 					//const double temp=temp_from_index(currRate,k);
@@ -298,7 +810,9 @@ void tabulate_fit(struct photonRate * currRate) {
 					else {
 						kOverT=ku;
 					}
-					currRate->tabulated_rate[k][j]=(*(currRate->rate_fit_function))(kOverT,temp,0.0);	
+					const double tmp_res=(*(currRate->rate_fit_function))(kOverT,temp,0.0);
+					currRate->tabulated_rate[k][j]=tmp_res;
+					currRate->tabulated_rate_log[k][j]=log(tmp_res);
 				}
 			}
 
@@ -325,12 +839,15 @@ void load_rate_from_file(struct photonRate * currRate) {
 		const int size_y=currRate->number_of_points_in_temp;
 
 		currRate->tabulated_rate = new double * [size_y];	
+		currRate->tabulated_rate_log = new double * [size_y];	
 
 		for(int k=0; k<size_y;k++) {
 			currRate->tabulated_rate[k] = new double [size_x];	
+			currRate->tabulated_rate_log[k] = new double [size_x];	
 			for(int j=0; j<size_x;j++) {
 				rateFile >> tmpRate;
 				currRate->tabulated_rate[k][j]=tmpRate;
+				currRate->tabulated_rate_log[k][j]=log(tmpRate);
 			}
 		}
 
@@ -338,7 +855,7 @@ void load_rate_from_file(struct photonRate * currRate) {
 	}
 }
 
-double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kOverTkOverTOver_e_P) {
+double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2) {
 
 	//void get_photon_rate(int selector, double (**local_rate)(double, double, double));
 	double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk);
@@ -362,6 +879,17 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 	//Multiply by shear viscosity factor?
 	if (currRate->is_shear_viscous) {
 		res*=kOverTkOverTOver_e_P/2.0;
+	}
+	//Multiply by bulk pressure?
+	else if (currRate->is_bulk_viscous) {
+		//Multiply QGP rate by 1/(1/3-cs^2)*(bulk pressure)/(epsilon+P) 
+		if (currRate->is_qgp) {
+			res*=bulk_pressure/eps_plus_P/(1./3.0-cs2);
+		}
+		//and hadron gas rate by just the bulk pressure
+		else if (currRate->is_hg) {
+			res*=bulk_pressure;
+		}
 	}
 
 	//Only compute the rate, which is the slowest part of the calculation, if all the above factors are non-zero
@@ -565,10 +1093,14 @@ double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, 
 		if (fx1y1>0&&fx2y1>0&&fx1y2>0&&fx2y2>0) {
 
 			//Exact version
-			double log11=log(fx1y1);
-			double log12=log(fx1y2);
-			double log21=log(fx2y1);
-			double log22=log(fx2y2);
+			//double log11=log(fx1y1);
+			//double log12=log(fx1y2);
+			//double log21=log(fx2y1);
+			//double log22=log(fx2y2);
+			double log11=currRate->tabulated_rate_log[b1][a1];
+			double log12=currRate->tabulated_rate_log[b1+1][a1];
+			double log21=currRate->tabulated_rate_log[b1][a1+1];
+			double log22=currRate->tabulated_rate_log[b1+1][a1+1];
 
 			//Slighly faster version
 			//Log[a + x] = Log[a] + x/a - x^2/(2 a^2) + x^3/(3 a^3) + ...
@@ -690,6 +1222,61 @@ double rate_qgp_ideal_LO_AMYfit(double kOverT, double T, double kkPiOver_e_P_k2)
 
 }
 
+//QGP ideal rate - Dusling [arXiv:0903.1764, eq.5]
+double rate_qgp_ideal_Dusling(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//Forward declaration
+	double fermiDirac(double kOverT);
+
+	//
+	const double qCharge2[]={4.0/9.0,5.0/9.0,2.0/3.0,10.0/9.0,11.0/9.0,5.0/3.0};
+
+	double res=CONST_GeV2_to_GeVm2_fmm4*1./(2.0*M_PI*M_PI)*qCharge2[CONST_Nf-1]*CONST_alphaEM*CONST_alphaS*fermiDirac(kOverT)*T*T*log(3.7388*kOverT*1.0/(CONST_gs*CONST_gs));
+
+	return res;
+
+}
+
+//Dusling's QGP shear rate: df_shear/f*(Dusling's ideal rate)
+//df_shear=K_mu K_nu Pi^munu/(2*(eps+P)*T^2)*(1-f(k))*f(k) 
+//A factor K_mu K_nu Pi^munu/(T^2*(eps+P))/2.0 is included in function "eval_photon_rate()" when shear viscosity flag is on
+//This function should thus be (1-f(k))*(ideal rate)
+double rate_qgp_shear_viscous_Dusling(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//Forward declaration
+	double fermiDirac(double kOverT);
+	double rate_qgp_ideal_Dusling(double kOverT, double T, double kkPiOver_e_P_k2);
+
+
+	//
+	double res=(1.0-fermiDirac(kOverT))*rate_qgp_ideal_Dusling(kOverT,T,0.0);
+
+	return res;
+
+
+}
+
+//Dusling's QGP bulk rate: df_bulk/f*(Dusling's ideal rate)
+//df_bulk=-f(k)*(1-f(k))*(m^2/T^2/(k/T)-k/T)*1/(1/3-c_s^2)*bulk_pressure/15./(eps+P)
+//A factor bulk_pressure/eps_plus_P/(1./3.0-cs2) is included in function "eval_photon_rate()" when bulk viscosity flag is on
+//This function should thus be -(1-f(k))*(m^2/T^2/(k/T)-k/T)/15.0*(ideal rate)
+double rate_qgp_bulk_viscous_Dusling(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//Forward declaration
+	double fermiDirac(double kOverT);
+	double rate_qgp_ideal_Dusling(double kOverT, double T, double kkPiOver_e_P_k2);
+
+	const double EOverT=sqrt(kOverT*kOverT+CONST_mInfOverT*CONST_mInfOverT);
+
+
+	//
+	//double res=-1.0*(1.0-fermiDirac(kOverT))*(CONST_mInfOverT*CONST_mInfOverT/kOverT-kOverT)/15.0*rate_qgp_ideal_Dusling(kOverT,T,0.0);
+	double res=-1.0*(1.0-fermiDirac(kOverT))*(CONST_mInfOverT*CONST_mInfOverT/EOverT-EOverT)/15.0*rate_qgp_ideal_Dusling(kOverT,T,0.0);
+
+	return res;
+
+
+}
 
 //QGP ideal rate - KLS high k/T, low g formula [Kapusta et al, PRD44, 9 (1991), eq.41]
 double rate_qgp_ideal_born_KLS(double kOverT, double T, double kkPiOver_e_P_k2) {
@@ -730,6 +1317,40 @@ double rate_qgp_viscous_only_born_g2_sqrtg(double kOverT, double T, double kkPiO
 	double res = 0.0;
 
 	if ((kOverT>kOverT_min)&&(kOverT<kOverT_max)) res=1.0/(kOverT*kOverT)*CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(0.295523 +(122.469 -713.728*kOverT+1034.67*kOverT*kOverT-1437.68*kOverT*kOverT*kOverT-650.401*kOverT*kOverT*kOverT*kOverT+562.913*kOverT*kOverT*kOverT*kOverT*kOverT+1.86032*kOverT*kOverT*kOverT*kOverT*kOverT*kOverT)/(1-155.427*kOverT+794.21*kOverT*kOverT-743.499*kOverT*kOverT*kOverT+910.294*kOverT*kOverT*kOverT*kOverT+109.401*kOverT*kOverT*kOverT*kOverT*kOverT))*pow(kOverT,0.797818);
+	
+	return res;
+
+}
+
+////viscous correction to rate
+////q^*=sqrt(g_s), g_s=2
+////Set to 0 outside its validity range
+//double rate_qgp_viscous_only_born_g2_sqrtg_fit2(double kOverT, double T, double kkPiOver_e_P_k2) {
+//	
+//	const double kOverT_min=.23, kOverT_max=56.23;
+//
+//	double res = 0.0;
+//
+//	if ((kOverT>kOverT_min)&&(kOverT<kOverT_max)) res=1.0/(kOverT*kOverT)*CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(-0.6931751991916247 + (7.87763445794781 - 42.411575069925824*kOverT + 48.51030946174481*pow(kOverT,2) - 65.86346604276692*pow(kOverT,3) - 100.25264753957238*pow(kOverT,4) + 58.71186065436014*pow(kOverT,5) + 61.16364489051317*pow(kOverT,6) + 0.1738872251791384*pow(kOverT,7))/(1 - 16.38152525372209*kOverT + 41.463359273491264*pow(kOverT,2) + 46.0077555440831*pow(kOverT,3) + 5.826535120681859*pow(kOverT,4) + 83.13189143375328*pow(kOverT,5) + 9.484958438301062*pow(kOverT,6)))*pow(kOverT,0.7128199956159046);
+//	
+//	return res;
+//
+//}
+
+
+
+//viscous correction to rate
+//Assume \delta f = f_{eq}*(1+a*f_{eq})*g(u_{\mu}k^{\mu}/T)*pi_{\mu\nu}/(e+P)/2*k^{\mu}*k^{\nu} /(T**2)
+//with g(x)=122.2408622*(0.06892336-0.02450075*x+0.05561067*x*x+0.0016648148*x*x*x)/(1+x)**2/(0.1+x)
+//q^*=sqrt(g_s), g_s=2 and 0.1<k/T<54.95
+//Set to 0 outside its validity range
+double rate_qgp_viscous_only_born_g2_sqrtg_new_deltaf(double kOverT, double T, double kkPiOver_e_P_k2) {
+	
+	const double kOverT_min=.1, kOverT_max=54.95;
+
+	double res = 0.0;
+
+	if ((kOverT>kOverT_min)&&(kOverT<kOverT_max)) res=1.0/(kOverT*kOverT)*CONST_GeV2_to_GeVm2_fmm4*kOverT*prefA(kOverT,T)/CONST_twoPiCubed*exp(1.4274971976983575 + (-0.8991812638895219 - 1.5871546798742364*kOverT - 0.8076355682623856*pow(kOverT,2) + 0.16857175093784463*pow(kOverT,3) + 0.0014374161291589363*pow(kOverT,4))/(1 - 0.03663738034947868*kOverT + 0.8338180260100825*pow(kOverT,2) + 0.12919671811881156*pow(kOverT,3)))*pow(kOverT,1.1322592873421042);
 	
 	return res;
 
@@ -829,6 +1450,73 @@ double boseEin(double kOverT) {
 
 }
 
+//Rapp et al's photon rate from in-medium rho mesons, as parametrized in ...
+double rate_hg_in_medium_rho_ideal_Rapp_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//
+	const double a=-31.21+353.61*T-1739.4*T*T+3105*T*T*T;
+	const double b=-5.513-42.2*T+333*T*T-570*T*T*T;
+	const double c=-6.153+57*T-134.61*T*T+8.31*T*T*T;
+
+	const double k=kOverT*T;
+
+	double res=exp(a*k+b+c/(k+0.2));
+
+	return res;
+
+}
+
+//Rapp et al's photon rate from in-medium rho mesons, as parametrized in ...
+double rate_hg_pion_brem_ideal_Rapp_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//
+	const double T2=T*T;
+	const double T3=T2*T;
+	const double a=-16.28+62.45*T-93.4*T2-7.5*T3;
+	const double b=-35.54+414.8*T-2054*T2+3718.8*T3;
+	const double c=0.7364-10.72*T+56.32*T2-103.5*T3;
+	const double d=-2.51+58.152*T-318.24*T2+610.7*T3;
+
+	const double k=kOverT*T;
+
+	double res=exp(a+b*k+c*k*k+d/(k+0.2));
+
+	return res;
+
+}
+
+//Fit of Zahed-Dusling's low T photon rate. 100 < T < 200 MeV, 0.2 < k < 5 GeV
+double rate_hg_ideal_Zahed_Dusling_2pi_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+
+
+	//
+	const double lT=log(T);
+	const double lk=log(kOverT*T);
+	const double lT2=lT*lT;
+	const double lT3=lT2*lT;
+	const double lk2=lk*lk;
+	const double lk3=lk2*lk;
+	const double lk4=lk3*lk;
+
+	double res=exp(3.9242043019455433
+	               + 4.785547499773419*(1 + 0.41363881867911095*lk - 0.04811524892833928*lk2 + 0.3808205573095817*lk3 +0.11256358970445153*lk4)*lT 
+	               - 1.8846748688191692*(1 - 0.06623529535737044*lk + 0.389375957931405*lk2 - 0.821714627504325*lk3 - 0.21057052677851257*lk4)*lT2 
+		       + 0.06875606519946258*(1 + 5.228449112565715*lk + 1.9302736990409124*lk2 + 7.541355952332698*lk3 + 1.5150073214876982*lk4)*lT3);
+
+	return res;
+
+}
+
+//Rapp et al's photon rate from in-medium rho mesons, as parametrized in ...
+double rate_hg_in_medium_rho_ideal_Rapp_fit_PCE160(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//
+	//const double r=(1+exp(-2*mu
+	return 1.0/0.0;
+
+}
+
 //HG ideal rate - Simon Turbide's fit [???]
 double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
 
@@ -859,6 +1547,33 @@ double rate_hg_ideal_Turbide_fit(double kOverT, double T, double kkPiOver_e_P_k2
 
 }
 
+
+
+//HG ideal rate - Simon Turbide's fit without pion bremstr. doublecontains
+double rate_hg_ideal_Turbide_noPiPi_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//
+	double rate_hg_ideal_Turbide_fit_piRho_a1PiRho_piGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piRho_omegatChan_piGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piKstar_KGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_piK_KstarGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_rhoK_KGamma(double E, double T);
+	double rate_hg_ideal_Turbide_fit_KKstar_piGamma(double E, double T);
+
+	const double E=kOverT*T;
+
+	double res=0.0;
+
+	res=rate_hg_ideal_Turbide_fit_piRho_a1PiRho_piGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_piRho_omegatChan_piGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_piKstar_KGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_piK_KstarGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_rhoK_KGamma(E,T)+ \
+	    rate_hg_ideal_Turbide_fit_KKstar_piGamma(E,T);
+
+	return res;
+
+}
 
 //From Maxime's program
 double FFpion(double E)
@@ -914,8 +1629,31 @@ double rate_hg_ideal_Turbide_fit_KKstar_piGamma(double E, double T) {
 	return pow(FFk(E),4)*pow(T,3.7)*exp(-(6.096*pow(T,1.889)+1.0299)/pow(2*E*T,-1.613*pow(T,2.162)+0.975) -0.96*E/T);
 }
 
+double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch150(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	double rate_hg_ideal_Turbide_fit_chem_pot_Boltz(double kOverT, double T, double kkPiOver_e_P_k2, enum chem_freezeout_temp Tch); 
+
+	return rate_hg_ideal_Turbide_fit_chem_pot_Boltz(kOverT, T, kkPiOver_e_P_k2, Tch150);
+
+}
 
 double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	double rate_hg_ideal_Turbide_fit_chem_pot_Boltz(double kOverT, double T, double kkPiOver_e_P_k2, enum chem_freezeout_temp Tch); 
+
+	return rate_hg_ideal_Turbide_fit_chem_pot_Boltz(kOverT, T, kkPiOver_e_P_k2, Tch160);
+
+}
+
+double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch165(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	double rate_hg_ideal_Turbide_fit_chem_pot_Boltz(double kOverT, double T, double kkPiOver_e_P_k2, enum chem_freezeout_temp Tch); 
+
+	return rate_hg_ideal_Turbide_fit_chem_pot_Boltz(kOverT, T, kkPiOver_e_P_k2, Tch165);
+
+}
+
+double rate_hg_ideal_Turbide_fit_chem_pot_Boltz(double kOverT, double T, double kkPiOver_e_P_k2, enum chem_freezeout_temp Tch) {
 
 	//
 	double rate_hg_ideal_Turbide_fit_piRho_a1PiRho_piGamma(double E, double T);
@@ -926,14 +1664,14 @@ double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160(double kOverT, double T, 
 	double rate_hg_ideal_Turbide_fit_piK_KstarGamma(double E, double T);
 	double rate_hg_ideal_Turbide_fit_rhoK_KGamma(double E, double T);
 	double rate_hg_ideal_Turbide_fit_KKstar_piGamma(double E, double T);
-	double get_PH_chem_pot_pions_Tch160(double T); 
-	double get_PH_chem_pot_kaons_Tch160(double T);
+	double get_PH_chem_pot_pions(double T, enum chem_freezeout_temp Tch); 
+	double get_PH_chem_pot_kaons(double T, enum chem_freezeout_temp Tch);
 
 	const double E=kOverT*T;
 	
 	double res=0.0;
-	double muPion=get_PH_chem_pot_pions_Tch160(T);
-	double muKaon=get_PH_chem_pot_kaons_Tch160(T);
+	double muPion=get_PH_chem_pot_pions(T, Tch);
+	double muKaon=get_PH_chem_pot_kaons(T, Tch);
 	double muRho=2*muPion;
 	double muKstar=muPion+muKaon;
 	double expMuPionOverT=exp(muPion/T);
@@ -957,40 +1695,95 @@ double rate_hg_ideal_Turbide_fit_chem_pot_Boltz_Tch160(double kOverT, double T, 
 
 //pi, rho, K, K^*, but rho and K^* are actually unstable
 //Take T in GeV, return mu in GeV
-double get_PH_chem_pot_pions_Tch160(double T) {
+double get_PH_chem_pot_pions(double T, enum chem_freezeout_temp Tch) {
 
 	//
 	double res;
+
+	switch(Tch) {
+
+		case Tch150:
+			if (T>0.15) {
+				res=0.0;
+			}
+			else {
+				res=(0.1391802540030629 - 2.5394267515127775*T + 20.879628260096943*T*T - 67.56361472739776*T*T*T)/(1 - 11.157083798775501*T + 51.749504569561154*T*T);
+			}
+			break;
+			
+		case Tch160:
+			if (T>0.16) {
+				res=0.0;
+			}
+			else {
+				res=(0.13989273701516192 - 2.3597467055955885*T + 19.326406907950684*T*T - 62.7506772821009*T*T*T)/(1 - 10.758531025652175*T + 50.30650344070788*T*T); 
+			}
+			break;
+
+		case Tch165:
+			if (T>0.165) {
+				res=0.0;
+			}
+			else {
+				res=(0.14147237963580053 - 2.3888305421239244*T + 23.09944275257463*T*T - 83.70949379912233*T*T*T)/(1 - 10.87028053710845*T + 64.05564313498687*T*T);
+			}
+			break;
+
+	}
 	
-	if (T>0.16) {
-		res=0.0;
+	return res;
+
+}
+
+double get_PH_chem_pot_kaons(double T, enum chem_freezeout_temp Tch) {
+
+	//
+	double res;
+
+	switch(Tch) {
+
+		case Tch150:
+			if (T>0.15) {
+				res=0.0;
+			}
+			else {
+				res=(0.4907686964365895 - 5.8950237384113695*T + 48.53455196905417*T*T - 207.0194972599132*T*T*T)/(1 - 3.640490397093469*T + 55.61735320330468*T*T);
+			}
+			break;
+			
+		case Tch160:
+			if (T>0.16) {
+				res=0.0;
+			}
+			else {
+				res=(0.49039646786244145 - 6.445326572927662*T + 63.72787484481105*T*T - 266.31358950869026*T*T*T)/(1 - 5.345400242205774*T + 79.774948475777*T*T);
+			}
+			break;
+
+		case Tch165:
+			if (T>0.165) {
+				res=0.0;
+			}
+			else {
+				res=(0.48692564193025784 - 10.07234004754924*T + 115.61157740249656*T*T - 439.19569740354456*T*T*T)/(1 - 13.489702407741524*T + 143.5787763163101*T*T);
+			}
+			break;
+
 	}
-	else {
-		res=(0.13989273701516192 - 2.3597467055955885*T + 19.326406907950684*T*T - 62.7506772821009*T*T*T)/(1 - 10.758531025652175*T + 50.30650344070788*T*T); 
-	}
+	
 
 	return res;
 
 }
-double get_PH_chem_pot_kaons_Tch160(double T) {
-
-	//
-	double res;
-	
-	if (T>0.16) {
-		res=0.0;
-	}
-	else {
-		res=(0.49039646786244145 - 6.445326572927662*T + 63.72787484481105*T*T - 266.31358950869026*T*T*T)/(1 - 5.345400242205774*T + 79.774948475777*T*T);
-	}
-
-	return res;
-
-}
-
 
 
 double T2_normalisation(double kOverT, double T, double kk) {
 	const double res=T;
 	return res*res;
 }
+
+
+double minus_sign_normalisation(double kOverT, double T, double kk) {
+	return -1;
+}
+
