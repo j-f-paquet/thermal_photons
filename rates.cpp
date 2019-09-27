@@ -71,7 +71,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->rate_fit_function=rate_qgp_ideal_born_AMYfit;
 
 
-			currRate->filename_of_external_table="./rate_QGP_2to2_total_eqrate.dat";
+			currRate->filename_of_external_table="./partonic_rates/rate_QGP_2to2_total_eqrate.dat";
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=80;
 			currRate->number_of_points_in_temp=351;
@@ -348,7 +348,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
 
-			currRate->filename_of_external_table="./rate_QGP_2to2_total_viscous.dat";
+			currRate->filename_of_external_table="./partonic_rates/rate_QGP_2to2_total_viscous.dat";
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=80;
 			currRate->number_of_points_in_temp=351;
@@ -448,7 +448,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
 
-			currRate->filename_of_external_table="./chun_eqrate_photon_rate_CE.dat";
+			currRate->filename_of_external_table="./hadronic_rates/chun_eqrate_photon_rate_CE.dat";
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=81;
 			currRate->number_of_points_in_temp=351;
@@ -473,7 +473,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
 
-			currRate->filename_of_external_table="./chun_shear_photon_rate_CE.dat";
+			currRate->filename_of_external_table="./hadronic_rates/chun_shear_photon_rate_CE.dat";
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=81;
 			currRate->number_of_points_in_temp=351;
@@ -500,7 +500,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
 
-			currRate->filename_of_external_table="./rate_HG_2to2_total_eqrate_PCE165.dat";
+			currRate->filename_of_external_table="./hadronic_rates/rate_HG_2to2_total_eqrate_PCE165.dat";
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=80;
 			currRate->number_of_points_in_temp=351;
@@ -525,7 +525,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
 
-			currRate->filename_of_external_table="./rate_HG_2to2_total_viscous_PCE165.dat";
+			currRate->filename_of_external_table="./partonic_rates/rate_HG_2to2_total_viscous_PCE165.dat";
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=80;
 			currRate->number_of_points_in_temp=351;
@@ -553,7 +553,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
 
-			currRate->filename_of_external_table="./chun_bulk_photon_rate_CE.dat";
+			currRate->filename_of_external_table="./hadronic_rates/chun_bulk_photon_rate_CE.dat";
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=81;
 			currRate->number_of_points_in_temp=75;
@@ -581,7 +581,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
 
-			currRate->filename_of_external_table="./chun_bulk_photon_rate_CE_eos_transport.dat";
+			currRate->filename_of_external_table="./hadronic_rates/chun_bulk_photon_rate_CE_eos_transport.dat";
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=81;
 			currRate->number_of_points_in_temp=75;
@@ -609,7 +609,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 //			currRate->use_table_instead_of_fit=true;
 //			currRate->tabulate_fit_for_speed=false;
 //
-//			currRate->filename_of_external_table="./chun_bulk_photon_rate_PCE165.dat";
+//			currRate->filename_of_external_table="./partonic_rates/chun_bulk_photon_rate_PCE165.dat";
 //			currRate->use_k_instead_of_kOverT_for_table=true;
 //			currRate->number_of_points_in_kOverT=81;
 //			currRate->number_of_points_in_temp=76;
