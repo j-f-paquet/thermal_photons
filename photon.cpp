@@ -73,7 +73,7 @@ void photon_prod(const struct photonRate rate_list[]) {
 
 		//std::cout << "Line " << line << "=Position (itau,ix,iy,ieta)=(" << curr_pos.itau << "," << curr_pos.ix << "," << curr_pos.iy << "," << curr_pos.ieta << ")\n";
 		
-		if ((curr_pos.itau%2!=0)&&(T_and_boosts[0]>=CONST_freezeout_T)) {
+		if (T_and_boosts[0]>=CONST_freezeout_T) {
 			pre_computeDescretizedSpectrum(&curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
 		}
 		//Compute (tau,x,y,eta) from line number
@@ -490,7 +490,7 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOve
 		//tmpRate*=QGP_fraction(T);
 
 		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
-		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*tmp_cellsize_eta*2*CONST_effective_dTau*curr_pos->tau;
+		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*tmp_cellsize_eta*CONST_effective_dTau*curr_pos->tau;
 
 		//Fill value
 		discSpectra[irap][iphi][ikT][1][iRate]+=tmpRate;
