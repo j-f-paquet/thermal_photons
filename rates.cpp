@@ -788,6 +788,8 @@ void tabulate_fit(struct photonRate * currRate) {
 		}
 		else {
 
+                        std::cout << "Tabulating rate " << currRate->name << "\n";
+
 			const int size_x=currRate->number_of_points_in_kOverT;
 			const int size_y=currRate->number_of_points_in_temp;
 
