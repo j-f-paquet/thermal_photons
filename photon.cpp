@@ -48,6 +48,9 @@ void photon_prod(const struct photonRate rate_list[]) {
 
 	//rate(kOverT)=rate_ideal(koverT)+\hat{k}_\alpha \hat{k}_\beta \Pi^{\alpha \beta}*factor_born_viscous(kOverT)
 	//Frame of \Pi^{\alpha \beta}:
+        
+
+        std::cout << "Computing thermal photons...\n";
 
 	//Initialise spacetime position
 	curr_pos.tau=CONST_tau0;
