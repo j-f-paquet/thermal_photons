@@ -111,7 +111,9 @@ hg_bulk_Chun_table_CE_eos_transport,
 hg_pion_brem_ideal_Rapp_fit_tabulated,
 hg_in_medium_rho_ideal_Rapp_fit_tabulated,
 hg_ideal_Turbide_fit_noPiPi_tabulated,
-hg_ideal_Zahed_Dusling_2pi_fit_tabulated
+hg_ideal_Zahed_Dusling_2pi_fit_tabulated,
+hg_piRhoOmega_ideal_Rapp_fit_tabulated,
+thermal_ideal,
 };
 /****************************/
 //const enum rate_type CONST_rates_to_use[] = {qgp_ideal_born_AMYfit,qgp_ideal_born_KLS,hg_ideal_Turbide_fit,qgp_ideal_LO_AMYfit,qgp_ideal_born_AMYfit_with_cuts,qgp_ideal_born_AMY_table, qgp_ideal_born_AMYfit_tabulated};
