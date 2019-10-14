@@ -5,6 +5,7 @@
 void init_rates(struct photonRate * currRate, enum rate_type id) {
 
 	//
+	double rate_thermal_ideal(double,double,double);
 	double rate_qgp_ideal_born_AMYfit(double, double, double);
 	double rate_qgp_ideal_born_KLS(double, double, double);
 	double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
@@ -29,12 +30,36 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 	double rate_hg_ideal_Turbide_noPiPi_fit(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_hg_pion_brem_ideal_Rapp_fit(double kOverT, double T, double kkPiOver_e_P_k2);
 	double rate_hg_ideal_Zahed_Dusling_2pi_fit(double kOverT, double T, double kkPiOver_e_P_k2);
+	double rate_hg_piRhoOmega_ideal_Rapp_fit(double kOverT, double T, double kkPiOver_e_P_k2);
 
 	void tabulate_fit(struct photonRate * currRate); 
 	void load_rate_from_file(struct photonRate * currRate);
 
-//const char CONST_available_rate[][100]={"rate_qgp_ideal_born_AMYfit","rate_qgp_ideal_born_KLS","rate_qgp_ideal_born_JF_sqrtg","rate_qgp_viscous_only_born_JF_sqrtg", "rate_hg_ideal_Turbide_fit","rate_qgp_ideal_LO_AMYfit"};
 	switch(id) {
+
+		case thermal_ideal:
+			
+			currRate->name="rate_thermal_ideal";
+			
+			currRate->is_thermal=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_thermal_ideal;
+
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=80;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.8;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=4.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+
+			break;
 
 		case qgp_ideal_born_AMYfit_tabulated:
 			
@@ -704,6 +729,34 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 
 
 
+
+		//rate_hg_ideal_Turbide_fit
+		case hg_piRhoOmega_ideal_Rapp_fit_tabulated:
+
+			currRate->name="rate_hg_in_piRhoOmega_ideal_Rapp_fit_tabulated";
+
+			currRate->is_hg=true;
+			currRate->is_shear_viscous=false;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hg_piRhoOmega_ideal_Rapp_fit;
+
+			currRate->use_k_instead_of_kOverT_for_table=true;
+			currRate->number_of_points_in_kOverT=150;
+			currRate->number_of_points_in_temp=351;
+			currRate->min_temp=0.1;
+			currRate->max_temp=0.22;
+			currRate->min_kOverT=0.05;
+			currRate->max_kOverT=5.0;
+			currRate->kOverT_discretization_type=linear;
+			currRate->temp_discretization_type=linear;
+
+			tabulate_fit(currRate);
+			break;
+
+
+
 		//rate pions bremstralung
 		case hg_pion_brem_ideal_Rapp_fit_tabulated:
 
@@ -864,18 +917,17 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 	double QGP_fraction(double T); 
 
 	//
-	double res;
+	double res=1.0;
 
+	if (!currRate->is_thermal) {
 	//For speed, check if a QGP fraction is used first
-	if (currRate->is_qgp) {
-		res=QGP_fraction(T); 
+		if (currRate->is_qgp) {
+			res=QGP_fraction(T); 
 
-	}
-	else if (currRate->is_hg) {
-		res=1-QGP_fraction(T);
-	}
-	else {
-		res=1.0;
+		}
+		else if (currRate->is_hg) {
+			res=1-QGP_fraction(T);
+		}
 	}
 
 	//Multiply by shear viscosity factor?
@@ -1468,6 +1520,53 @@ double rate_hg_in_medium_rho_ideal_Rapp_fit(double kOverT, double T, double kkPi
 
 }
 
+//Rapp et al's photon rate from pi-rho-omega
+double rate_hg_piRhoOmega_ideal_Rapp_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//
+	const double T2=T*T;
+	const double T3=T2*T;
+	const double k=kOverT*T;
+
+//c--------------------------------------
+
+	const double q0=k;
+//	const double q0q=q0*q0;
+ 
+// c********** pi+rho->gamma+omega
+       const double a1=-35.8991+460.425*T-2592.04*T2+5342.32*T3;
+       const double a2=-41.9725+601.952*T-3587.8 *T2+7604.97*T3;
+       const double a3=0.740436-16.7159*T+133.526*T2-347.589*T3;
+       const double a4= 2.00611-3.79343*T+29.3101*T2-72.8725*T3;
+       const double a5=-8.33046+121.091*T-801.676*T2+1712.16*T3;
+       const double a6=17.9029 -  388.5*T+2779.03*T2- 6448.4*T3;
+       const double a7=-15.622 +340.651*T-2483.18*T2+5870.61*T3;
+       const double FFpiro=exp(a1*q0+a2+a3*pow(q0,a4)+a5*pow((q0+a6),a7));
+// c********** rho+omega->gamma+pi
+      const double b1=-29.6866+331.769*T-1618.66*T2+2918.53*T3;
+      const double b2=-15.3332+90.2225*T-300.185*T2+428.386*T3;
+      const double b3=-7.35061+109.288*T-630.396*T2+1227.69*T3;
+      const double b4=-10.6044+  109.1*T-500.718*T2+872.951*T3;
+       const double FFomro=exp(b1*q0+b2+b3/(q0+0.2)+b4/pow((q0+0.2),2));
+// c********** pi+omega->gamma+rho
+       const double d1=-29.4663 +291.356*T-1301.27*T2+2102.12*T3;
+       const double d2=-45.081  +688.929*T-4150.15*T2+8890.76*T3;
+       const double d3=-0.260076+8.92875*T- 60.868*T2+ 136.57*T3;
+       const double d4= 2.2663  -8.30596*T+49.3342*T2-90.8501*T3;
+       const double d5= 10.2955 -317.077*T+2412.15*T2- 6020.9*T3;
+       const double d6= 3.12251 -47.5277*T+ 222.61*T2-  241.9*T3;
+       const double d7=-3.39045 +56.5927*T- 336.97*T2+622.756*T3;
+       const double FFompi=exp(d1*q0+d2+d3*pow(q0,d4)+d5*pow((q0+d6),d7));
+
+//      const double dR1d3q= fugaro*fugapi* (FFpiro + fugapi*FFompi + fugaro*FFomro);
+
+	double res=FFpiro + FFompi + FFomro;
+
+	return res;
+
+}
+
+
 //Rapp et al's photon rate from in-medium rho mesons, as parametrized in ...
 double rate_hg_pion_brem_ideal_Rapp_fit(double kOverT, double T, double kkPiOver_e_P_k2) {
 
@@ -1789,3 +1888,26 @@ double minus_sign_normalisation(double kOverT, double T, double kk) {
 	return -1;
 }
 
+double rate_thermal_ideal(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//
+	double qgpFrac=QGP_fraction(T);
+	double hgFrac=1.-qgpFrac;
+
+	//
+	double res=0.0;
+	if (hgFrac > 0.0) {
+		res+=hgFrac*rate_hg_ideal_Turbide_noPiPi_fit(kOverT,T,kkPiOver_e_P_k2);
+		res+=hgFrac*rate_hg_in_medium_rho_ideal_Rapp_fit(kOverT,T,kkPiOver_e_P_k2);
+		res+=hgFrac*rate_hg_pion_brem_ideal_Rapp_fit(kOverT,T,kkPiOver_e_P_k2);
+		res+=hgFrac*rate_hg_piRhoOmega_ideal_Rapp_fit(kOverT,T,kkPiOver_e_P_k2);
+	}
+
+
+	if (qgpFrac > 0.0) {
+		res+=qgpFrac*rate_qgp_ideal_LO_AMYfit(kOverT,T,kkPiOver_e_P_k2);
+	}
+
+	return res;
+
+}

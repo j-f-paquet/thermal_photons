@@ -227,6 +227,7 @@ struct photonRate {
 	//Parameters to specify by what factor should the rate be multiplied by, if any
 	bool is_qgp; //Rate is multiplied by QGP_fraction
 	bool is_hg; //Rate is multiplied by (1-QGP_fraction)
+	bool is_thermal; //Rate is multiplied by (1-QGP_fraction)
 
 	bool is_shear_viscous; //Multiply rate by K_mu K_nu Pi^\mu\mu/k^2
 	bool is_bulk_viscous; //Multiply rate by the bulk pressure
@@ -248,6 +249,7 @@ struct photonRate {
 		extra_normalisation_factor_function=0;
 		is_qgp=false;
 		is_hg=false;
+		is_thermal=false;
 
 		is_shear_viscous=false;
 		is_bulk_viscous=false;
