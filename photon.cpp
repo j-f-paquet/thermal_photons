@@ -476,9 +476,9 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOve
 	}
 	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_NkT][3][CONST_rateList.size()];
 
-		//get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
+        //get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
 
-		tmpRate=eval_photon_rate(currRate,kR/T,T,kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2);
+        tmpRate=eval_photon_rate(currRate,kR/T,T,kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2);
 
 //		//Either use the fits directly or a table made from the fits
 //		if (CONST_use_accel_rates[CONST_rates_to_use[iRate]-1]) {
@@ -487,19 +487,19 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOve
 //		else {
 //			tmpRate=(*local_rate)(kR/T,T,kOverTkOverTOver_e_P);
 //		}
-		//tmpRate=kR*(1.0+cos(kR*(2.0)*iphi*CONST_delPhi));
+        //tmpRate=kR*(1.0+cos(kR*(2.0)*iphi*CONST_delPhi));
 
-		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
-		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*tmp_cellsize_eta*CONST_effective_dTau*curr_pos->tau;
+        //Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
+        tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*tmp_cellsize_eta*CONST_effective_dTau*curr_pos->tau;
 
-		//Fill value
-		discSpectra[irap][iphi][ikT][1]+=tmpRate;
+        //Fill value
+        discSpectra[ikT][irap][iphi][1]+=tmpRate;
 
-		//Fill lower bound uncertainty
-		discSpectra[irap][iphi][ikT][0]=0.0;
+        //Fill lower bound uncertainty
+        discSpectra[ikT][irap][iphi][0]=0.0;
 
-		//Fill upper bound uncertainty
-		discSpectra[irap][iphi][ikT][2]=0.0;
+        //Fill upper bound uncertainty
+        discSpectra[ikT][irap][iphi][2]=0.0;
 
 
 
