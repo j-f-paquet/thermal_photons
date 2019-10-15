@@ -241,9 +241,6 @@ struct photonRate {
 	int number_of_points_in_temp;
 	double min_temp, max_temp;
 	double min_kOverT, max_kOverT;
-	//Have to specify if the sampling is linear, quadratic, ...
-	enum interp_type kOverT_discretization_type; 
-	enum interp_type temp_discretization_type; 
 
 	photonRate() {
 

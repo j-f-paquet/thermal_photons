@@ -23,8 +23,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -47,8 +45,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -73,8 +69,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 			load_rate_from_file(currRate);
 
 			break;
@@ -111,8 +105,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=1.;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -136,8 +128,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=1.;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -162,8 +152,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=1.;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -188,8 +176,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=1.;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -252,8 +238,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=CONST_pure_QGP_T;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -288,8 +272,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=1.;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -312,8 +294,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=1.;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -337,8 +317,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -362,8 +340,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			currRate->extra_normalisation_factor_function=T2_normalisation;
 
@@ -389,8 +365,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=CONST_pure_QGP_T;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -413,8 +387,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=CONST_pure_QGP_T;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -437,8 +409,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=CONST_pure_QGP_T;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -462,8 +432,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.05;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			load_rate_from_file(currRate);
 
@@ -487,8 +455,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.05;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			currRate->extra_normalisation_factor_function=T2_normalisation;
 
@@ -514,8 +480,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			load_rate_from_file(currRate);
 
@@ -539,8 +503,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			currRate->extra_normalisation_factor_function=T2_normalisation;
 
@@ -567,8 +529,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.248;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.05;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			//currRate->extra_normalisation_factor_function=minus_sign_normalisation;
 
@@ -595,8 +555,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.248;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.05;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			//currRate->extra_normalisation_factor_function=minus_sign_normalisation;
 
@@ -623,8 +581,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 //			currRate->max_temp=0.25;
 //			currRate->min_kOverT=0.05;
 //			currRate->max_kOverT=4.05;
-//			currRate->kOverT_discretization_type=linear;
-//			currRate->temp_discretization_type=linear;
 //
 //			//currRate->extra_normalisation_factor_function=T2_normalisation;
 //
@@ -651,8 +607,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -677,8 +631,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.8;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -702,8 +654,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.22;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -730,8 +680,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.22;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=5.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -757,8 +705,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=0.22;
 			currRate->min_kOverT=0.05;
 			currRate->max_kOverT=4.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 			break;
@@ -783,8 +729,6 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->max_temp=CONST_pure_QGP_T;
 			currRate->min_kOverT=0.0;
 			currRate->max_kOverT=80.0;
-			currRate->kOverT_discretization_type=linear;
-			currRate->temp_discretization_type=linear;
 
 			tabulate_fit(currRate);
 
@@ -812,7 +756,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 void tabulate_fit(struct photonRate * currRate) {
 
 	void get_photon_rate(int selector, double (**local_rate)(double, double, double));
-	double interp_x_from_index(enum interp_type interp_type, double xmin, double xmax, int i, int size); 
+	double interp_x_from_index(double xmin, double xmax, int i, int size); 
 
 	if (currRate->tabulate_fit_for_speed) {
 
@@ -831,11 +775,11 @@ void tabulate_fit(struct photonRate * currRate) {
 			currRate->tabulated_rate_log = new double * [size_y];	
 
 			for(int k=0; k<size_y;k++) {
-				const double temp=interp_x_from_index(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,k,currRate->number_of_points_in_temp);
+				const double temp=interp_x_from_index(currRate->min_temp,currRate->max_temp,k,currRate->number_of_points_in_temp);
 				currRate->tabulated_rate[k] = new double [size_x];	
 				currRate->tabulated_rate_log[k] = new double [size_x];	
 				for(int j=0; j<size_x;j++) {
-					const double ku=interp_x_from_index(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,j,currRate->number_of_points_in_kOverT);
+					const double ku=interp_x_from_index(currRate->min_kOverT,currRate->max_kOverT,j,currRate->number_of_points_in_kOverT);
 					//const double temp=temp_from_index(currRate,k);
 					//const double ku=kOverT_from_index(currRate,j);
 					double kOverT;
@@ -958,49 +902,17 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 	return res;
 }
 
-double interp_x_from_index(enum interp_type interp_type, double xmin, double xmax, int i, int size) {
+double interp_x_from_index(double xmin, double xmax, int i, int size) {
 
-	double res;
-
-	switch(interp_type) {
-	//Linear
-	case linear:
-		res=xmin+(xmax-xmin)*i*1.0/(size-1);
-		break;
-
-	//Quadratic
-	case quadratic:
-		res=xmin+(xmax-xmin)*i*i*1.0/((size-1)*(size-1));
-		break;
-
-	default:
-		res=1./0.;
-		break;
-	}
+	double res=xmin+(xmax-xmin)*i*1.0/(size-1);
 
 	return res;
 
 }
 
-int interp_index_from_x(enum interp_type interp_type, double xmin, double xmax, double x, int size) {
+int interp_index_from_x(double xmin, double xmax, double x, int size) {
 
-	int index;
-
-	switch(interp_type) {
-	//Linear
-	case linear:
-		index=floor((x-xmin)*(size-1)*1.0/(xmax-xmin)+0.5);
-		break;
-
-	//Quadratic
-	case quadratic:
-		index=floor(sqrt((x-xmin)*(size-1)*(size-1)*1.0/(xmax-xmin))+0.5);
-		break;
-
-	default:
-		index=-1;
-		break;
-	}
+	const int index=floor((x-xmin)*(size-1)*1.0/(xmax-xmin)+0.5);
 
 	return index;
 
@@ -1038,8 +950,8 @@ int interp_index_from_x(enum interp_type interp_type, double xmin, double xmax, 
 
 double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk) {
 
-	double interp_x_from_index(enum interp_type interp_type, double xmin, double xmax, int i, int size);
-	int interp_index_from_x(enum interp_type interp_type, double xmin, double xmax, double x, int size); 
+	double interp_x_from_index(double xmin, double xmax, int i, int size);
+	int interp_index_from_x(double xmin, double xmax, double x, int size); 
 
 	double res;
 
@@ -1048,8 +960,8 @@ double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, 
 
 	//int a1=index_from_kOverT(currRate,kOverT);
 	//int b1=index_from_temp(currRate,T);		
-	int a1=interp_index_from_x(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,kOverT,currRate->number_of_points_in_kOverT);
-	int b1=interp_index_from_x(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,T,currRate->number_of_points_in_temp);
+	int a1=interp_index_from_x(currRate->min_kOverT,currRate->max_kOverT,kOverT,currRate->number_of_points_in_kOverT);
+	int b1=interp_index_from_x(currRate->min_temp,currRate->max_temp,T,currRate->number_of_points_in_temp);
 
 	//Must decide what to do when the requested value is outside the table's range
 	if ((a1+1>=size_x)||(b1+1>=size_y)||(a1<0)||(b1<0)) {
@@ -1066,10 +978,10 @@ double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, 
 		//double x2=kOverT_from_index(currRate,a1+1);
 		//double y1=temp_from_index(currRate,b1);
 		//double y2=temp_from_index(currRate,b1+1);
-		double x1=interp_x_from_index(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,a1,currRate->number_of_points_in_kOverT);
-		double x2=interp_x_from_index(currRate->kOverT_discretization_type,currRate->min_kOverT,currRate->max_kOverT,a1+1,currRate->number_of_points_in_kOverT);
-		double y1=interp_x_from_index(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,b1,currRate->number_of_points_in_temp);
-		double y2=interp_x_from_index(currRate->temp_discretization_type,currRate->min_temp,currRate->max_temp,b1+1,currRate->number_of_points_in_temp);
+		double x1=interp_x_from_index(currRate->min_kOverT,currRate->max_kOverT,a1,currRate->number_of_points_in_kOverT);
+		double x2=interp_x_from_index(currRate->min_kOverT,currRate->max_kOverT,a1+1,currRate->number_of_points_in_kOverT);
+		double y1=interp_x_from_index(currRate->min_temp,currRate->max_temp,b1,currRate->number_of_points_in_temp);
+		double y2=interp_x_from_index(currRate->min_temp,currRate->max_temp,b1+1,currRate->number_of_points_in_temp);
 
 		//Robust but inefficient
 		if (fx1y1>0&&fx2y1>0&&fx1y2>0&&fx2y2>0) {
