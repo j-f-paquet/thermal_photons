@@ -30,8 +30,8 @@ void photon_prod(const struct photonRate rate_list[]) {
 	bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
 	bool viscRead(bool binary, void * shearFile, void * bulkFile, float visc_info[]);
 	void update_position_info(int line, struct phaseSpace_pos *curr_pos);
-	void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
-	void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
+	void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+	void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 	//Variables
 	float T_and_boosts[5], visc_info[13];
@@ -44,7 +44,7 @@ void photon_prod(const struct photonRate rate_list[]) {
 	struct phaseSpace_pos curr_pos;
 	//The second to last dimension is meant for including an upper and a lower bound on the uncertainty, if possible
 	//discSpectra[][][][0/1/2][] is for the lower bound/value/upper bound
-	double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates] = {0.0};
+	double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3] = {0.0};
 
 	//rate(kOverT)=rate_ideal(koverT)+\hat{k}_\alpha \hat{k}_\beta \Pi^{\alpha \beta}*factor_born_viscous(kOverT)
 	//Frame of \Pi^{\alpha \beta}:
@@ -219,10 +219,10 @@ bool viscRead(bool binary, void * shearFile, void * bulkFile, float visc_info[])
 }
 
 
-void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
+void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
 	//Forward declaration
-	void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
+	void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 	if (!CONST_boost_invariant) {
 		computeDescretizedSpectrum(curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
@@ -270,10 +270,10 @@ void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and
 
 
 /***** Computation of the discretized spectrum *****/
-void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
+void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 	
 	//Forward declaration
-	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
+	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 	//Local variables
 	double gamma;
@@ -317,129 +317,133 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 
 	//Compute (tau,x,y,eta) from line number
 
-	//Loop over transverse momentum kT, azimuthal angle phi and rapidity rap
-	//(note that there is no different here between the rapidity and the pseudorapidity, the photon being massless)
-	//Loop over kT
-	for(int ikT=0;ikT<CONST_NkT; ikT++) {
+        //Loop over rates
+        for(int iRate=0; iRate<CONST_N_rates;iRate++) {
 
-		kT=CONST_kTMin+ikT*CONST_delKt;	
+                //Loop over transverse momentum kT, azimuthal angle phi and rapidity rap
+                //(note that there is no different here between the rapidity and the pseudorapidity, the photon being massless)
+                //Loop over kT
+                for(int ikT=0;ikT<CONST_NkT; ikT++) {
 
-		//Loop over rapidity rap
-		for(int irap=0;irap<CONST_Nrap; irap++) {
+                        kT=CONST_kTMin+ikT*CONST_delKt;	
 
-			rap=CONST_rapMin+irap*CONST_delRap;	
+                        //Loop over rapidity rap
+                        for(int irap=0;irap<CONST_Nrap; irap++) {
 
-			coshRap=cosh(rap);
-			sinhRap=sinh(rap);
-			invCoshRap=1.0/coshRap;
+                                rap=CONST_rapMin+irap*CONST_delRap;	
 
-			//Loop over phi (uniform discretization - to be used with the trapezoidal method)
-			for(int iphi=0;iphi<CONST_Nphi; iphi++) {
+                                coshRap=cosh(rap);
+                                sinhRap=sinh(rap);
+                                invCoshRap=1.0/coshRap;
 
-				phi=iphi*CONST_delPhi;	
+                                //Loop over phi (uniform discretization - to be used with the trapezoidal method)
+                                for(int iphi=0;iphi<CONST_Nphi; iphi++) {
 
-				//cosPhi=cos(phi);
-				//sinPhi=sin(phi);
-				cosPhi=cosPhiArray[iphi];
-				sinPhi=sinPhiArray[iphi];
+                                        phi=iphi*CONST_delPhi;	
 
-
-				//Evaluate (A_L)_{alpha beta} \hat{k}_L^alpha \alpha{k}_L^beta
-				if (CONST_with_viscosity&&CONST_with_shear_viscosity) {
-					//shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
-					//*shear_info+: 0   1   2   3   4   5   6   7   8   9
-					//K=(kT cosh(y), kT cos(phi), kT sin(phi), kT sinh(y))
-					//\hat{K}=(1,cos(phi)/cosh(rap),sin(phi)/cosh(rap),sinh(rap)/cosh(rap))
-					if (!CONST_boost_invariant) {
-						//kkPiOverEta=A00 + 1/cosh(rap)*( 2*(A01*k1+A02*k2+A03*k3) + 1/coshrap*() )
-						//kkPiOverEta=A00 + 1/cosh(rap)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(rap)^2)+2/cosh(rap)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(rap)+1/cosh(rap)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(rap)+A23*sin(phi)*sinh(rap)))
-						//kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
-						//kOverTkOverTOver_e_P=kT*kT*coshRap*coshRap*(visc_info[0] + invCoshRap*invCoshRap*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhRap*sinhRap) + 2.0*invCoshRap*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*sinhRap + invCoshRap*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhRap + visc_info[8]*sinPhi*sinhRap)));
-
-						const double kt=kT*coshRap;
-						const double kx=kT*cosPhi;
-						const double ky=kT*sinPhi;
-						const double kz=kT*sinhRap;
-
-						kOverTkOverTOver_e_P=kt*(kt*pitt-2*kx*pitx-2*ky*pity-2*kz*pitz)+kx*(kx*pixx+2*ky*pixy+2*kz*pixz)+ky*(ky*piyy+2*kz*piyz)+kz*kz*pizz;
-
-						kOverTkOverTOver_e_P/=T*T;
+                                        //cosPhi=cos(phi);
+                                        //sinPhi=sin(phi);
+                                        cosPhi=cosPhiArray[iphi];
+                                        sinPhi=sinPhiArray[iphi];
 
 
+                                        //Evaluate (A_L)_{alpha beta} \hat{k}_L^alpha \alpha{k}_L^beta
+                                        if (CONST_with_viscosity&&CONST_with_shear_viscosity) {
+                                                //shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
+                                                //*shear_info+: 0   1   2   3   4   5   6   7   8   9
+                                                //K=(kT cosh(y), kT cos(phi), kT sin(phi), kT sinh(y))
+                                                //\hat{K}=(1,cos(phi)/cosh(rap),sin(phi)/cosh(rap),sinh(rap)/cosh(rap))
+                                                if (!CONST_boost_invariant) {
+                                                        //kkPiOverEta=A00 + 1/cosh(rap)*( 2*(A01*k1+A02*k2+A03*k3) + 1/coshrap*() )
+                                                        //kkPiOverEta=A00 + 1/cosh(rap)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(rap)^2)+2/cosh(rap)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(rap)+1/cosh(rap)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(rap)+A23*sin(phi)*sinh(rap)))
+                                                        //kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
+                                                        //kOverTkOverTOver_e_P=kT*kT*coshRap*coshRap*(visc_info[0] + invCoshRap*invCoshRap*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhRap*sinhRap) + 2.0*invCoshRap*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*sinhRap + invCoshRap*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhRap + visc_info[8]*sinPhi*sinhRap)));
+
+                                                        const double kt=kT*coshRap;
+                                                        const double kx=kT*cosPhi;
+                                                        const double ky=kT*sinPhi;
+                                                        const double kz=kT*sinhRap;
+
+                                                        kOverTkOverTOver_e_P=kt*(kt*pitt-2*kx*pitx-2*ky*pity-2*kz*pitz)+kx*(kx*pixx+2*ky*pixy+2*kz*pixz)+ky*(ky*piyy+2*kz*piyz)+kz*kz*pizz;
+
+                                                        kOverTkOverTOver_e_P/=T*T;
 
 
 
-					}
-					//In the boost-invariant case, \Pi^\mu\nu is the value a eta=0
-					//k_\mu k\nu \Pi^\mu\nu must be calculed correctly
-					else {
-						//K=(kT cosh(y), kT cos(phi), kT sin(phi), kT sinh(y))
-						//(k^tau,k^x,k^y,k^eta)=(kT cosh(y-eta),k^x,k^y,kT sinh(y-eta)/tau)
-						//k=kT*cosh(rap)
-						//shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
-						//*shear_info+: 0   1   2   3   4   5   6   7   8   9
-						const double tau=curr_pos->tau;
-
-						const double ktau=kT*cosh(rap-curr_pos->eta);
-						const double kx=kT*cosPhi;
-						const double ky=kT*sinPhi;
-						const double keta=kT*sinh(rap-curr_pos->eta)/tau;
-
-						const double eta_of_pimunu_slice=0.0;
-						const double dtau_dt=cosh(eta_of_pimunu_slice);
-						const double deta_dt=-1.0*sinh(eta_of_pimunu_slice)/tau;
-						const double dtau_dz=-1.0*sinh(eta_of_pimunu_slice);
-						const double deta_dz=cosh(eta_of_pimunu_slice)/tau;
-
-						const double tau2=tau*tau;
-
-						const double pitautau=dtau_dt*dtau_dt*pitt+2*dtau_dt*dtau_dz*pitz+dtau_dz*dtau_dz*pizz;
-						const double pitaux=dtau_dt*pitx+dtau_dz*pixz;
-						const double pitauy=dtau_dt*pity+dtau_dz*piyz;
-						const double pitaueta=dtau_dt*deta_dt*pitt+(dtau_dt*deta_dz+dtau_dz*deta_dt)*pitz+dtau_dz*deta_dz*pizz;
-						const double pixeta=deta_dt*pitx+deta_dz*pixz;
-						const double piyeta=deta_dt*pity+deta_dz*piyz;
-						const double pietaeta=deta_dt*deta_dt*pitt+2*deta_dt*deta_dz*pitz+deta_dz*deta_dz*pizz;
-
-						kOverTkOverTOver_e_P=ktau*(ktau*pitautau-2*kx*pitaux-2*ky*pitauy-2*tau2*keta*pitaueta)+kx*(kx*pixx+2*ky*pixy+2*tau2*keta*pixeta)+ky*(ky*piyy+2*tau2*keta*piyeta)+tau2*tau2*keta*keta*pietaeta;
-
-						kOverTkOverTOver_e_P/=T*T;
-
-					}
 
 
-					//double tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9]);
-					//if (tr_check > 1e-5) {
-					//	std::cout << "Warning: Large deviation from tracelessness (" << tr_check << ")!\n";
-					//}
-					
-					//Akk=(*shear_info)+invCoshRap( (*shear_info+4)*cosPhi*cosPhi);
-				}
-				else {
-					kOverTkOverTOver_e_P=0.0;
-				}
-			
-				//Photon momentum in the lab frame
-				//k=mT cosh(rap)=kT cosh(rap)
-				kL=kT*coshRap;
-				//kx=kT cos(phi)
-				kLx=kT*cosPhi;
-				//ky=kT sin(phi)
-				kLy=kT*sinPhi;
-				//kz=mT sinh(rap)=kT sinh(rap)
-				kLz=kT*sinhRap;
+                                                }
+                                                //In the boost-invariant case, \Pi^\mu\nu is the value a eta=0
+                                                //k_\mu k\nu \Pi^\mu\nu must be calculed correctly
+                                                else {
+                                                        //K=(kT cosh(y), kT cos(phi), kT sin(phi), kT sinh(y))
+                                                        //(k^tau,k^x,k^y,k^eta)=(kT cosh(y-eta),k^x,k^y,kT sinh(y-eta)/tau)
+                                                        //k=kT*cosh(rap)
+                                                        //shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
+                                                        //*shear_info+: 0   1   2   3   4   5   6   7   8   9
+                                                        const double tau=curr_pos->tau;
 
-				//kR.uR=kL.uL
-				//k_rf=(k_L-\vec{u}/u0.\vec{k})/sqrt(1-u^2/u0^2)
-				kR=gamma*(kL-betax*kLx-betay*kLy-betaz*kLz);
+                                                        const double ktau=kT*cosh(rap-curr_pos->eta);
+                                                        const double kx=kT*cosPhi;
+                                                        const double ky=kT*sinPhi;
+                                                        const double keta=kT*sinh(rap-curr_pos->eta)/tau;
 
-				//Our rate
-				//dGamma(\vec{k}_L)=dGamma_0(k_rf)+(A_L)_{alpha beta} k_L^alpha k_L^beta Z(rf) 
-				curr_pos->ikT=ikT;
-				curr_pos->iphi=iphi;
-				curr_pos->irap=irap;
-				fill_grid(curr_pos, kR, T, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2, rate_list,discSpectra);	
+                                                        const double eta_of_pimunu_slice=0.0;
+                                                        const double dtau_dt=cosh(eta_of_pimunu_slice);
+                                                        const double deta_dt=-1.0*sinh(eta_of_pimunu_slice)/tau;
+                                                        const double dtau_dz=-1.0*sinh(eta_of_pimunu_slice);
+                                                        const double deta_dz=cosh(eta_of_pimunu_slice)/tau;
 
+                                                        const double tau2=tau*tau;
+
+                                                        const double pitautau=dtau_dt*dtau_dt*pitt+2*dtau_dt*dtau_dz*pitz+dtau_dz*dtau_dz*pizz;
+                                                        const double pitaux=dtau_dt*pitx+dtau_dz*pixz;
+                                                        const double pitauy=dtau_dt*pity+dtau_dz*piyz;
+                                                        const double pitaueta=dtau_dt*deta_dt*pitt+(dtau_dt*deta_dz+dtau_dz*deta_dt)*pitz+dtau_dz*deta_dz*pizz;
+                                                        const double pixeta=deta_dt*pitx+deta_dz*pixz;
+                                                        const double piyeta=deta_dt*pity+deta_dz*piyz;
+                                                        const double pietaeta=deta_dt*deta_dt*pitt+2*deta_dt*deta_dz*pitz+deta_dz*deta_dz*pizz;
+
+                                                        kOverTkOverTOver_e_P=ktau*(ktau*pitautau-2*kx*pitaux-2*ky*pitauy-2*tau2*keta*pitaueta)+kx*(kx*pixx+2*ky*pixy+2*tau2*keta*pixeta)+ky*(ky*piyy+2*tau2*keta*piyeta)+tau2*tau2*keta*keta*pietaeta;
+
+                                                        kOverTkOverTOver_e_P/=T*T;
+
+                                                }
+
+
+                                                //double tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9]);
+                                                //if (tr_check > 1e-5) {
+                                                //	std::cout << "Warning: Large deviation from tracelessness (" << tr_check << ")!\n";
+                                                //}
+
+                                                //Akk=(*shear_info)+invCoshRap( (*shear_info+4)*cosPhi*cosPhi);
+                                        }
+                                        else {
+                                                kOverTkOverTOver_e_P=0.0;
+                                        }
+
+                                        //Photon momentum in the lab frame
+                                        //k=mT cosh(rap)=kT cosh(rap)
+                                        kL=kT*coshRap;
+                                        //kx=kT cos(phi)
+                                        kLx=kT*cosPhi;
+                                        //ky=kT sin(phi)
+                                        kLy=kT*sinPhi;
+                                        //kz=mT sinh(rap)=kT sinh(rap)
+                                        kLz=kT*sinhRap;
+
+                                        //kR.uR=kL.uL
+                                        //k_rf=(k_L-\vec{u}/u0.\vec{k})/sqrt(1-u^2/u0^2)
+                                        kR=gamma*(kL-betax*kLx-betay*kLy-betaz*kLz);
+
+                                        //Our rate
+                                        //dGamma(\vec{k}_L)=dGamma_0(k_rf)+(A_L)_{alpha beta} k_L^alpha k_L^beta Z(rf) 
+                                        curr_pos->ikT=ikT;
+                                        curr_pos->iphi=iphi;
+                                        curr_pos->irap=irap;
+                                        fill_grid(curr_pos, kR, T, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2, &rate_list[iRate],discSpectra[iRate]);	
+
+                                }
 
 			}
 		}	
@@ -450,10 +454,9 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 //Discretized spectra: array[times][Nrap][Nphi][Npt][rates]
 //Discretized spectra, version 2: array[times][Nrap][Nphi][Npt][rates][value_and_remainder]
 //stPos=[tau, irap, iphi, ikT]
-void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
+void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
 	//
-	double QGP_fraction(double T);
 	double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kkPiOver_e_P_k2, double bulk_pressure, double eps_plus_P, double cs2); 
 
 	//
@@ -471,14 +474,11 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOve
 	else {
 		tmp_cellsize_eta=CONST_cellsize_Eta;
 	}
-
-	//Loop over rates
-	for(int iRate=0; iRate<CONST_N_rates;iRate++) {
 	//double discSpectra[CONST_Neta][CONST_Nphi][CONST_NkT][3][CONST_rateList.size()];
 
 		//get_photon_rate(CONST_rates_to_use[iRate], &local_rate);
 
-		tmpRate=eval_photon_rate(&rate_list[iRate],kR/T,T,kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2);
+		tmpRate=eval_photon_rate(currRate,kR/T,T,kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2);
 
 //		//Either use the fits directly or a table made from the fits
 //		if (CONST_use_accel_rates[CONST_rates_to_use[iRate]-1]) {
@@ -489,22 +489,18 @@ void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double kOve
 //		}
 		//tmpRate=kR*(1.0+cos(kR*(2.0)*iphi*CONST_delPhi));
 
-		//QGP fraction
-		//tmpRate*=QGP_fraction(T);
-
 		//Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
 		tmpRate*=CONST_cellsize_X*CONST_cellsize_Y*tmp_cellsize_eta*CONST_effective_dTau*curr_pos->tau;
 
 		//Fill value
-		discSpectra[irap][iphi][ikT][1][iRate]+=tmpRate;
+		discSpectra[irap][iphi][ikT][1]+=tmpRate;
 
 		//Fill lower bound uncertainty
-		discSpectra[irap][iphi][ikT][0][iRate]=0.0;
+		discSpectra[irap][iphi][ikT][0]=0.0;
 
 		//Fill upper bound uncertainty
-		discSpectra[irap][iphi][ikT][2][iRate]=0.0;
+		discSpectra[irap][iphi][ikT][2]=0.0;
 
-	}
 
 
 }
@@ -557,17 +553,17 @@ void update_position_info(int line, struct phaseSpace_pos *curr_pos) {
 }
 
 
-void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
+void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
 	//
-	void compute_midrapidity_yield_and_vn(const struct photonRate currRate[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]);
+	void compute_midrapidity_yield_and_vn(const struct photonRate currRate[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 	compute_midrapidity_yield_and_vn(rate_list, discSpectra);
 
 }
 
 //Output the phi-integrated, rapidity-averaged-around-0 yield as a function of pT
-void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], double discSpectra[CONST_Nrap][CONST_Nphi][CONST_NkT][3][CONST_N_rates]) {
+void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
 	double kT, rap, phi, yFac, rap_interval;
 	double yield, vn_sin[CONST_FourierNb], vn_cos[CONST_FourierNb];
@@ -667,10 +663,11 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 
 						//Finally, multiply by dNdydptdphi[NY][NPT][NPHI+1] 
 						//tmpIntRes+=phiFac*yFac*particleList[j].dNdydptdphi[iy][ipt][iphi];
-						yield+=discSpectra[irap][iphi][ikT][1][rate_no]*yFac;
+                                                const double tmp=discSpectra[rate_no][ikT][irap][iphi][1];
+						yield+=tmp*yFac;
 						for(int i=1;i<=CONST_FourierNb; i++) {
-							vn_cos[i-1]+=yFac*discSpectra[irap][iphi][ikT][1][rate_no]*cos(i*phi);
-							vn_sin[i-1]+=yFac*discSpectra[irap][iphi][ikT][1][rate_no]*sin(i*phi);
+							vn_cos[i-1]+=yFac*tmp*cos(i*phi);
+							vn_sin[i-1]+=yFac*tmp*sin(i*phi);
 						}
 						
 					}
