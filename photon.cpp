@@ -11,8 +11,6 @@ int main() {
 	//
 	struct photonRate rate_list[CONST_N_rates];
 
-	//Grid information
-
 	//Initialise rates
 	for(int i=0;i<CONST_N_rates;i++) init_rates(&rate_list[i], CONST_rates_to_use[i]);
 
@@ -121,7 +119,6 @@ void openFileRead(bool binary, std::string filename, void ** pointer) {
 	if (NULL==*pointer) {
 		std::printf("Error: Could not open file \"%s\"",filename.c_str());
 	}
-
 
 }
 
@@ -276,11 +273,7 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 	//Local variables
-	double gamma;
-	double rap, phi, kT;
-	double kL, kLx, kLy, kLz;
-	double kR, kOverTkOverTOver_e_P;
-	double coshRap, sinhRap, cosPhi, sinPhi, invCoshRap;
+	struct phaseSpace_pos curr_pos_copy;
 	//double stPosition[4];
 
 	//Assign those to local variables for convenience
@@ -313,38 +306,45 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 	for(int i=0; i<CONST_Nphi;i++) sinPhiArray[i]=sin(i*CONST_delPhi);
 
 	//Pre-compute gamma for efficiency
-	gamma=1.0/sqrt(1-(betax*betax+betay*betay+betaz*betaz));
+	const double gamma=1.0/sqrt(1-(betax*betax+betay*betay+betaz*betaz));
 
 	//Compute (tau,x,y,eta) from line number
 
         //Loop over rates
         for(int iRate=0; iRate<CONST_N_rates;iRate++) {
 
+		const struct photonRate current_rate=rate_list[iRate]; 
+
                 //Loop over transverse momentum kT, azimuthal angle phi and rapidity rap
                 //(note that there is no different here between the rapidity and the pseudorapidity, the photon being massless)
                 //Loop over kT
+		#pragma omp parallel for collapse(3) private(curr_pos_copy) shared(discSpectra) schedule(static)
                 for(int ikT=0;ikT<CONST_NkT; ikT++) {
-
-                        kT=CONST_kTMin+ikT*CONST_delKt;	
 
                         //Loop over rapidity rap
                         for(int irap=0;irap<CONST_Nrap; irap++) {
 
-                                rap=CONST_rapMin+irap*CONST_delRap;	
-
-                                coshRap=cosh(rap);
-                                sinhRap=sinh(rap);
-                                invCoshRap=1.0/coshRap;
-
                                 //Loop over phi (uniform discretization - to be used with the trapezoidal method)
                                 for(int iphi=0;iphi<CONST_Nphi; iphi++) {
 
-                                        phi=iphi*CONST_delPhi;	
+					curr_pos_copy=*curr_pos;
+
+					const double kT=CONST_kTMin+ikT*CONST_delKt;	
+
+					const double rap=CONST_rapMin+irap*CONST_delRap;	
+
+					const double coshRap=cosh(rap);
+					const double sinhRap=sinh(rap);
+					//invCoshRap=1.0/coshRap;
+
+                                        const double phi=iphi*CONST_delPhi;	
 
                                         //cosPhi=cos(phi);
                                         //sinPhi=sin(phi);
-                                        cosPhi=cosPhiArray[iphi];
-                                        sinPhi=sinPhiArray[iphi];
+                                        const double cosPhi=cosPhiArray[iphi];
+                                        const double sinPhi=sinPhiArray[iphi];
+
+					double kOverTkOverTOver_e_P;
 
 
                                         //Evaluate (A_L)_{alpha beta} \hat{k}_L^alpha \alpha{k}_L^beta
@@ -381,12 +381,12 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
                                                         //k=kT*cosh(rap)
                                                         //shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
                                                         //*shear_info+: 0   1   2   3   4   5   6   7   8   9
-                                                        const double tau=curr_pos->tau;
+                                                        const double tau=curr_pos_copy.tau;
 
-                                                        const double ktau=kT*cosh(rap-curr_pos->eta);
+                                                        const double ktau=kT*cosh(rap-curr_pos_copy.eta);
                                                         const double kx=kT*cosPhi;
                                                         const double ky=kT*sinPhi;
-                                                        const double keta=kT*sinh(rap-curr_pos->eta)/tau;
+                                                        const double keta=kT*sinh(rap-curr_pos_copy.eta)/tau;
 
                                                         const double eta_of_pimunu_slice=0.0;
                                                         const double dtau_dt=cosh(eta_of_pimunu_slice);
@@ -424,24 +424,24 @@ void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boo
 
                                         //Photon momentum in the lab frame
                                         //k=mT cosh(rap)=kT cosh(rap)
-                                        kL=kT*coshRap;
+                                        const double kL=kT*coshRap;
                                         //kx=kT cos(phi)
-                                        kLx=kT*cosPhi;
+                                        const double kLx=kT*cosPhi;
                                         //ky=kT sin(phi)
-                                        kLy=kT*sinPhi;
+                                        const double kLy=kT*sinPhi;
                                         //kz=mT sinh(rap)=kT sinh(rap)
-                                        kLz=kT*sinhRap;
+                                        const double kLz=kT*sinhRap;
 
                                         //kR.uR=kL.uL
                                         //k_rf=(k_L-\vec{u}/u0.\vec{k})/sqrt(1-u^2/u0^2)
-                                        kR=gamma*(kL-betax*kLx-betay*kLy-betaz*kLz);
+                                        const double kR=gamma*(kL-betax*kLx-betay*kLy-betaz*kLz);
 
                                         //Our rate
                                         //dGamma(\vec{k}_L)=dGamma_0(k_rf)+(A_L)_{alpha beta} k_L^alpha k_L^beta Z(rf) 
-                                        curr_pos->ikT=ikT;
-                                        curr_pos->iphi=iphi;
-                                        curr_pos->irap=irap;
-                                        fill_grid(curr_pos, kR, T, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2, &rate_list[iRate],discSpectra[iRate]);	
+                                        curr_pos_copy.ikT=ikT;
+                                        curr_pos_copy.iphi=iphi;
+                                        curr_pos_copy.irap=irap;
+                                        fill_grid(&curr_pos_copy, kR, T, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2, &current_rate,discSpectra[iRate]);	
 
                                 }
 
