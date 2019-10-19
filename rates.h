@@ -1,3 +1,6 @@
+#ifndef RATES_H
+#define RATES_H
+
 // Rate functions
 double rate_thermal_ideal(double,double,double);
 double rate_qgp_ideal_born_AMYfit(double, double, double);
@@ -31,3 +34,5 @@ double minus_sign_normalisation(double kOverT, double T, double kk);
 // Helper functions
 void tabulate_fit(struct photonRate * currRate); 
 void load_rate_from_file(struct photonRate * currRate);
+
+#endif

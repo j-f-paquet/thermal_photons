@@ -258,44 +258,17 @@ struct photonRate {
 
 };
 
-//const bool CONST_use_accel_rates[] = {0,0,0,0,1,0};
-//const int accel_table_sample_x[] = {500,500,500,500,500,500};
-//const int accel_table_sample_y[] = {500,500,500,500,250,500};
-//const double accel_table_min_temperature[]={CONST_pure_HG_T,CONST_pure_HG_T,CONST_pure_HG_T,CONST_pure_HG_T,CONST_freezeout_T,CONST_pure_HG_T};
-//const double accel_table_max_temperature[]={2.0,2.0,2.0,2.0,CONST_pure_QGP_T,2.0};
-//struct rate_accel {
-//
-//	double *** tabulated_rates;
-//
-//	rate_accel() {
-//
-//		void get_photon_rate(int selector, double (**local_rate)(double, double, double));
-//		double kOverT_from_index(int i, int size);
-//		double temp_from_index(int i, int size, int rate_no);
-//
-//		tabulated_rates = new double ** [CONST_N_rates];
-//
-//		int tmp_sample_x,tmp_sample_y;
-//		double (*local_rate)(double, double, double);
-//
-//		for(int rate_no=0;rate_no<CONST_N_rates;rate_no++) {
-//			if (!CONST_use_accel_rates[CONST_rates_to_use[rate_no]-1]) continue;
-//			get_photon_rate(CONST_rates_to_use[rate_no], &local_rate);
-//			tmp_sample_x=accel_table_sample_x[CONST_rates_to_use[rate_no]-1];
-//			tmp_sample_y=accel_table_sample_y[CONST_rates_to_use[rate_no]-1];
-//			tabulated_rates[rate_no] = new double * [tmp_sample_y];	
-//			for(int k=0; k<tmp_sample_y;k++) {
-//				tabulated_rates[rate_no][k] = new double [tmp_sample_x];	
-//				for(int j=0; j<tmp_sample_x;j++) {
-//					tabulated_rates[rate_no][k][j]=(*local_rate)(kOverT_from_index(j,tmp_sample_x),temp_from_index(k,tmp_sample_y,rate_no),0.0);	
-//				}
-//			}
-//		}
-//
-//	}
-//
-//};
-//
-//const struct rate_accel CONST_rate_tables;
+//Forward declaration
+void photon_prod(const struct photonRate rate_list[]);
+void init_rates(struct photonRate * currRate, enum rate_type id); 
+void openFileRead(bool binary, std::string filename, void ** pointer);
+bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
+bool viscRead(bool binary, void * shearFile, void * bulkFile, float visc_info[]);
+void update_position_info(int line, struct phaseSpace_pos *curr_pos);
+void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+void compute_midrapidity_yield_and_vn(const struct photonRate currRate[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 #endif

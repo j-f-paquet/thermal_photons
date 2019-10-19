@@ -23,14 +23,6 @@ int main() {
 //Compute photon production
 void photon_prod(const struct photonRate rate_list[]) {
 
-	//Forward declaration of functions
-	void openFileRead(bool binary, std::string filename, void ** pointer);
-	bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
-	bool viscRead(bool binary, void * shearFile, void * bulkFile, float visc_info[]);
-	void update_position_info(int line, struct phaseSpace_pos *curr_pos);
-	void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
-	void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
-
 	//Variables
 	float T_and_boosts[5], visc_info[13];
 	bool read_T_flag, read_visc_flag=true; //Result of reading of the file
@@ -218,8 +210,6 @@ bool viscRead(bool binary, void * shearFile, void * bulkFile, float visc_info[])
 
 void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
-	//Forward declaration
-	void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 	if (!CONST_boost_invariant) {
 		computeDescretizedSpectrum(curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
@@ -269,9 +259,6 @@ void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and
 /***** Computation of the discretized spectrum *****/
 void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 	
-	//Forward declaration
-	void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
-
 	//Local variables
 	struct phaseSpace_pos curr_pos_copy;
 	//double stPosition[4];
@@ -554,9 +541,6 @@ void update_position_info(int line, struct phaseSpace_pos *curr_pos) {
 
 
 void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
-
-	//
-	void compute_midrapidity_yield_and_vn(const struct photonRate currRate[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 	compute_midrapidity_yield_and_vn(rate_list, discSpectra);
 
