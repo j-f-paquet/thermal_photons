@@ -30,9 +30,21 @@
 
 /********* Inputs ********/
 //Format of the input files
-const bool CONST_binaryMode=MUSIC_outputBinaryEvolution; //0 for text, 1 for binary
+//const bool CONST_binaryMode=MUSIC_outputBinaryEvolution; //0 for text, 1 for binary
+enum evolution_file_format { old_format, new_format };
+// Old format: "T, dummy, betax, betay, betaz", plus separate files for shear tensor and bulk pressure
+// New format: "volume=dx*dy*deta*dtau*tau, eta, T, ux, uy, ueta, Wxx, Wxy, Wxeta, Wyy,Wyeta, pi_b"
 //Location of the spacetime grid file
-const std::string stGridFile="./evolution_xyeta.dat";
+const bool CONST_binaryMode=false; //0 for text, 1 for binary
+
+//const enum evolution_file_format CONST_file_format=new_format;
+//const std::string stGridFile="./evolution_xyeta_eos_qcd_new_format.dat";
+
+const enum evolution_file_format CONST_file_format=old_format;
+const std::string stGridFile="./evolution_xyeta_eos_qcd_old_format.dat";
+
+const std::string shearViscosityFile="evolution_Wmunu_over_epsilon_plus_P_xyeta.dat";
+const std::string bulkViscosityFile="evolution_bulk_pressure_xyeta.dat";
 
 //Information about the spacetime grid
 //Number of cells of the grid
@@ -48,6 +60,7 @@ const double CONST_tau0=MUSIC_tau0;
 const double CONST_effective_dTau=MUSIC_dtau;
 
 const bool CONST_boost_invariant=1;
+const double CONST_eta_s_of_saved_slice=0.0;
 const int CONST_nb_steps_eta_integration=30;
 const double CONST_max_eta_integration=3.0;
 
@@ -55,10 +68,7 @@ const double CONST_max_eta_integration=3.0;
 const bool CONST_with_shear_viscosity=MUSIC_with_shear_viscosity; //turn on and off shear viscosity
 const bool CONST_with_bulk_viscosity=MUSIC_with_bulk_viscosity; //turn on and off bulk viscosity
 const bool CONST_with_viscosity=CONST_with_shear_viscosity; //general flag for viscosity
-//const double shear_to_s=0.08;
 //Location of the viscous files
-const std::string shearViscosityFile="evolution_Wmunu_over_epsilon_plus_P_xyeta.dat";
-const std::string bulkViscosityFile="evolution_bulk_pressure_xyeta.dat";
 
 //Discretization of photon spectrum
 //kT
@@ -184,22 +194,17 @@ const double CONST_GeV2_to_GeVm2_fmm4=1.0/(CONST_hbarc*CONST_hbarc*CONST_hbarc*C
 
 /*************************/
 
-//Use to store spacetime position and related informations
-struct phaseSpace_pos {
+struct hydro_info_t {
 
-	//
-	double tau, x, y, eta;
-	int itau, ix, iy, ieta;
+	float tau;
+	float V4; //in fm^4
+	float eta_s; // spatial rapidity
+	float T, muB; //In GeV
+	float ux, uy, tau_ueta; //u^x, u^y, u^eta
 
-	//
-	int ikT, irap, iphi;
-
-	//
-	//int iTauList;
-	//bool newiTau;
-
-	//Spacetime integration weights
-	double w_eta;
+	// Viscous part
+	float pitautau, pitaux, pitauy, pitaueta, pixx, pixy, pixeta, piyy, piyeta, pietaeta;
+	float Pi_b, epsilon_plus_P, cs2;
 
 };
 
@@ -260,15 +265,16 @@ struct photonRate {
 
 //Forward declaration
 void photon_prod(const struct photonRate rate_list[]);
-void init_rates(struct photonRate * currRate, enum rate_type id); 
-void openFileRead(bool binary, std::string filename, void ** pointer);
-bool spacetimeRead(bool binary, void * file, float T_and_boosts[]);
-bool viscRead(bool binary, void * shearFile, void * bulkFile, float visc_info[]);
-void update_position_info(int line, struct phaseSpace_pos *curr_pos);
-void pre_computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+bool open_file_read(bool binary, std::string filename, std::FILE ** pointer);
+bool init_hydro_field_files(std::FILE * hydro_fields_files[3]);
+void close_hydro_field_files(std::FILE * hydro_fields_files[3]);
+bool read_hydro_fields(std::FILE * hydro_fields_files[3], struct hydro_info_t & hydro_info);
+bool read_hydro_fields_new_format(std::FILE * hydro_fields_files[3], struct hydro_info_t & hydro_info);
+bool read_hydro_fields_old_format(std::FILE * hydro_fields_files[3], struct hydro_info_t & hydro_info);
+void pre_computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+void fill_grid(int irap, int iphi, int ikT, double kR, double T, double V4, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
-void computeDescretizedSpectrum(struct phaseSpace_pos *curr_pos, float T_and_boosts[], float visc_info[], const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
-void fill_grid(struct phaseSpace_pos *curr_pos, double kR, double T, double Akk, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
-void compute_midrapidity_yield_and_vn(const struct photonRate currRate[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 
 #endif

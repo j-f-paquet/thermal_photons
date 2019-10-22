@@ -1,6 +1,9 @@
 #ifndef RATES_H
 #define RATES_H
 
+void init_rates(struct photonRate * currRate, enum rate_type id);
+double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2);
+
 // Rate functions
 double rate_thermal_ideal(double,double,double);
 double rate_qgp_ideal_born_AMYfit(double, double, double);
