@@ -28,6 +28,30 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 
 			break;
 
+		case hadronic_ideal:
+			
+			currRate->name="rate_hadronic_ideal";
+			
+			currRate->is_thermal=true;
+
+			currRate->use_table_instead_of_fit=false;
+			currRate->tabulate_fit_for_speed=true;
+			currRate->rate_fit_function=rate_hadronic_ideal;
+
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=1000;
+			currRate->number_of_points_in_temp=500;
+			currRate->min_temp=.1;
+			currRate->max_temp=1.;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
+
+
+			tabulate_fit(currRate);
+
+			break;
+
+
 		case qgp_ideal_born_AMYfit_tabulated:
 			
 			currRate->name="rate_qgp_ideal_born_AMYfit_tabulated";
@@ -1746,6 +1770,25 @@ double rate_thermal_ideal(double kOverT, double T, double kkPiOver_e_P_k2) {
 
 	if (qgpFrac > 0.0) {
 		res+=qgpFrac*rate_qgp_ideal_LO_AMYfit(kOverT,T,kkPiOver_e_P_k2);
+	}
+
+	return res;
+
+}
+
+double rate_hadronic_ideal(double kOverT, double T, double kkPiOver_e_P_k2) {
+
+	//
+	double qgpFrac=QGP_fraction(T);
+	double hgFrac=1.-qgpFrac;
+
+	//
+	double res=0.0;
+	if (hgFrac > 0.0) {
+		res+=hgFrac*rate_hg_ideal_Turbide_noPiPi_fit(kOverT,T,kkPiOver_e_P_k2);
+		res+=hgFrac*rate_hg_in_medium_rho_ideal_Rapp_fit(kOverT,T,kkPiOver_e_P_k2);
+		res+=hgFrac*rate_hg_pion_brem_ideal_Rapp_fit(kOverT,T,kkPiOver_e_P_k2);
+		res+=hgFrac*rate_hg_piRhoOmega_ideal_Rapp_fit(kOverT,T,kkPiOver_e_P_k2);
 	}
 
 	return res;

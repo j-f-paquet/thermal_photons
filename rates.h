@@ -6,6 +6,7 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 
 // Rate functions
 double rate_thermal_ideal(double,double,double);
+double rate_hadronic_ideal(double kOverT, double T, double kkPiOver_e_P_k2);
 double rate_qgp_ideal_born_AMYfit(double, double, double);
 double rate_qgp_ideal_born_KLS(double, double, double);
 double rate_qgp_ideal_born_JF_sqrtg(double kOverT, double T, double kkPiOver_e_P_k2);
