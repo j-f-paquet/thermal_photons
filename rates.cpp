@@ -16,13 +16,13 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->tabulate_fit_for_speed=true;
 			currRate->rate_fit_function=rate_thermal_ideal;
 
-			currRate->use_k_instead_of_kOverT_for_table=true;
-			currRate->number_of_points_in_kOverT=80;
-			currRate->number_of_points_in_temp=351;
-			currRate->min_temp=0.1;
-			currRate->max_temp=0.8;
-			currRate->min_kOverT=0.05;
-			currRate->max_kOverT=4.0;
+			currRate->use_k_instead_of_kOverT_for_table=false;
+			currRate->number_of_points_in_kOverT=1000;
+			currRate->number_of_points_in_temp=500;
+			currRate->min_temp=.1;
+			currRate->max_temp=1.;
+			currRate->min_kOverT=0.0;
+			currRate->max_kOverT=80.0;
 
 			tabulate_fit(currRate);
 
@@ -290,8 +290,8 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->rate_fit_function=rate_qgp_ideal_LO_AMYfit;
 
 			currRate->use_k_instead_of_kOverT_for_table=false;
-			currRate->number_of_points_in_kOverT=500;
-			currRate->number_of_points_in_temp=300;
+			currRate->number_of_points_in_kOverT=1000;
+			currRate->number_of_points_in_temp=500;
 			currRate->min_temp=CONST_pure_HG_T;
 			currRate->max_temp=1.;
 			currRate->min_kOverT=0.0;
