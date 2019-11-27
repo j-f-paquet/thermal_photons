@@ -1,6 +1,21 @@
 #include "photon.h"
 #include "rates.h"
 
+// #####################################################################################################################
+// ### This code convolute a near-thermal photon emission rate (photon emission per spacetime volume)
+// ### with a hydrodynamic spacetime profile.
+// ###
+// ### Rates are assumed to take the form
+// ### k d3Gamma/d3k = k d3Gamma_{ideal}/d3k 
+// ###                  + \pi^{\mu\nu} K^\mu K^\nu (shear_correction)
+// ###                  + \Pi (bulk_correction)
+// ### where the thermal rate "k d3Gamma_{ideal}/d3k" only depends on the temperature T and the flow velocity u^\mu
+// ### while the shear/bulk_corrections can also depend on other thermodynamic quantities
+// ###
+// ### All photon rates are defined in the "rates.cpp" file
+// #####################################################################################################################
+
+
 unsigned long int GLOBAL_line_number=0;
 
 //Main
