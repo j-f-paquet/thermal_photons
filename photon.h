@@ -168,9 +168,12 @@ struct hydro_info_t {
 	float T, muB; //In GeV
 	float ux, uy, tau_ueta; //u^x, u^y, u^eta
 
+        // Additional thermodynamic information
+        float epsilon_plus_P, cs2;
+
 	// Viscous part
-	float pitautau, pitaux, pitauy, pitaueta, pixx, pixy, pixeta, piyy, piyeta, pietaeta;
-	float Pi_b, epsilon_plus_P, cs2;
+	float pitautau_over_eps_plus_p, pitaux_over_eps_plus_p, pitauy_over_eps_plus_p, tau_pitaueta_over_eps_plus_p, pixx_over_eps_plus_p, pixy_over_eps_plus_p, tau_pixeta_over_eps_plus_p, piyy_over_eps_plus_p, tau_piyeta_over_eps_plus_p, tau_tau_pietaeta_over_eps_plus_p;
+	float Pi_b;
 
 };
 
