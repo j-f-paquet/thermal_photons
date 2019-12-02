@@ -120,6 +120,13 @@ bool init_hydro_field_files(std::FILE * hydro_fields_files[3]) {
 		return_value=open_file_read(CONST_binaryMode,stGridFile,&hydro_fields_files[0]);
 	}
 	else {
+
+                // Format check...
+                if ((CONST_cellsize_Eta > 1)&&(CONST_boost_invariant)) {
+                        std::cout << "2+1D hydro file has multiple slices in spatial rapidity. The code needs to be modified to deal with this...\n";
+                        exit(1);
+                }
+
 		return_value=open_file_read(CONST_binaryMode,stGridFile,&hydro_fields_files[0]);
 		bool shear_return_value=true;
 		bool bulk_return_value=true;
@@ -274,10 +281,9 @@ bool read_hydro_fields_old_format(std::FILE * hydro_fields_files[3], struct hydr
 
 	const bool binary=CONST_binaryMode;
 
-	int elem_to_read=5;
-	//if (viscosity) element_to_read+=...
-
-	int elem_read;
+        // Read ideal part
+	const int elem_to_read=5;
+        int elem_read;
 
 	std::FILE * tmp_ideal_file=hydro_fields_files[0];
 
@@ -297,6 +303,7 @@ bool read_hydro_fields_old_format(std::FILE * hydro_fields_files[3], struct hydr
 
 	if (elem_read != elem_to_read) return_value=false;
 
+        // Read viscous part
         float pitt_over_eps_plus_p, pitx_over_eps_plus_p, pity_over_eps_plus_p, pitz_over_eps_plus_p, pixx_over_eps_plus_p, pixy_over_eps_plus_p, pixz_over_eps_plus_p, piyy_over_eps_plus_p, piyz_over_eps_plus_p, pizz_over_eps_plus_p;
 	float bulk_pressure=0.0, eps_plus_P=0.0, cs2=0.0;
 
@@ -428,9 +435,11 @@ bool read_hydro_fields_old_format(std::FILE * hydro_fields_files[3], struct hydr
 
 void pre_computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
+        // 3+1D hydro
 	if (!CONST_boost_invariant) {
 		computeDescretizedSpectrum(hydro_info, rate_list, discSpectra);
 	}
+        // 2+1D hydro
 	else {
 		const int integration_steps=2*int(CONST_nb_steps_eta_integration/2.0);
 		const double delta_eta = 2.0*CONST_max_eta_integration/integration_steps;
@@ -460,7 +469,6 @@ void pre_computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const stru
 			computeDescretizedSpectrum(hydro_info, rate_list, discSpectra);
 		}
 
-		//const int eta_slice_choice=cellNb_eta/2+1;
 		////Integrate only over 1 slice in eta
 		//if (eta_slice_choice == curr_pos->ieta) {
 		//	double eta, eta_slice;
