@@ -35,28 +35,38 @@ const std::string stGridFile="./evolution_xyeta_eos_qcd_old_format.dat";
 const std::string shearViscosityFile="evolution_Wmunu_over_epsilon_plus_P_xyeta.dat";
 const std::string bulkViscosityFile="evolution_bulk_pressure_xyeta.dat";
 
-//Information about the spacetime grid
+// Viscous or not? (that is, should we read the files with the shear tensor and the bulk pressure)
+const bool CONST_with_shear_viscosity=MUSIC_with_shear_viscosity; //turn on and off shear viscosity
+const bool CONST_with_bulk_viscosity=MUSIC_with_bulk_viscosity; //turn on and off bulk viscosity
+const bool CONST_with_viscosity=CONST_with_shear_viscosity; //general flag for viscosity
+
+
+// Information about the spacetime grid, used only for the old evolution file format
 //Number of cells of the grid
 const int cellNb_x=MUSIC_real_nx;
 const int cellNb_y=MUSIC_real_ny;
 const int cellNb_eta=MUSIC_real_neta;
-//Size of the cells
+// Size of the cells
 const double CONST_cellsize_X=MUSIC_dx; //In fm
 const double CONST_cellsize_Y=MUSIC_dy; //In fm
 const double CONST_cellsize_Eta=MUSIC_deta; //In units of rapidity
-//Initial time tau_0
-const double CONST_tau0=MUSIC_tau0;
 const double CONST_effective_dTau=MUSIC_dtau;
+// Initial time tau_0
+const double CONST_tau0=MUSIC_tau0;
 
+// #################################
+// ### 2+1D hydro or 3+1D hydro? ###
+// #################################
+
+// Is the evolution file a single slice in eta_s of a 2+1D hydro?
 const bool CONST_boost_invariant=1;
 const double CONST_eta_s_of_saved_slice=0.0;
 const int CONST_nb_steps_eta_integration=30;
 const double CONST_max_eta_integration=3.0;
 
-//Run with viscosity or not
-const bool CONST_with_shear_viscosity=MUSIC_with_shear_viscosity; //turn on and off shear viscosity
-const bool CONST_with_bulk_viscosity=MUSIC_with_bulk_viscosity; //turn on and off bulk viscosity
-const bool CONST_with_viscosity=CONST_with_shear_viscosity; //general flag for viscosity
+// ##################################################
+// ### Stop producing photons at this temperature ###
+// ##################################################
 
 //const double CONST_freezeout_T=MUSIC_kinetic_FO_temperature_in_GeV;
 const double CONST_freezeout_T=0.145;
