@@ -467,43 +467,8 @@ void pre_computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const stru
 			hydro_info.V4=pre_V4*deta;
 
 			computeDescretizedSpectrum(hydro_info, rate_list, discSpectra);
+
 		}
-
-		////Integrate only over 1 slice in eta
-		//if (eta_slice_choice == curr_pos->ieta) {
-		//	double eta, eta_slice;
-		//	double old_u0, new_u0;
-		//	double ux, uy;
-		//	const int integration_step=2*int(CONST_nb_steps_eta_integration/2.0);
-		//	const double delta_eta = 2.0*CONST_max_eta_integration/integration_step;
-		//	eta_slice=(-cellNb_eta/2+eta_slice_choice-1)*CONST_cellsize_Eta;
-		//	old_u0=1.0/sqrt(1-T_and_boosts[2]*T_and_boosts[2]-T_and_boosts[3]*T_and_boosts[3]-T_and_boosts[4]*T_and_boosts[4]);
-		//	ux=T_and_boosts[2]*old_u0;
-		//	uy=T_and_boosts[3]*old_u0;
-
-		//	//Integrate in eta with trapezoidal method, using the symmetry around 0 to potentially speed-up the convergence
-		//	//Integrate in eta
-		//	for(int j=0;j<=integration_step;j++) {
-		//		eta=-1*CONST_max_eta_integration+j*delta_eta;
-		//		new_u0=sqrt((1+ux*ux+uy*uy)/(1-pow(tanh(eta),2))); 
-		//		T_and_boosts[2]=ux/new_u0;
-		//		T_and_boosts[3]=uy/new_u0;
-		//		T_and_boosts[4]=tanh(eta);
-
-		//		curr_pos->eta=eta;
-		//		if ((0 == j)||(integration_step == j)) {
-		//			curr_pos->w_eta=delta_eta/2.0;
-		//		}
-		//		else if (j%2 == 0) {
-		//			curr_pos->w_eta=delta_eta;
-		//		}
-		//		else {
-		//			curr_pos->w_eta=delta_eta;
-		//		}
-
-		//		computeDescretizedSpectrum(curr_pos, T_and_boosts, visc_info, rate_list, discSpectra);
-		//	}
-		//}
 	}
 
 }
