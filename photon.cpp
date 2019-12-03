@@ -256,13 +256,17 @@ bool read_hydro_fields_new_format(std::FILE * hydro_fields_files[3], struct hydr
 
 	hydro_info.Pi_b=Pi_b;
 
-	// The current format doesn't have enough information for my code to compute the viscous correction to photons
-	// Need to: reconstruct other components of pimunu from the five available, which is straightforward
-	// Plus need: EOS information to get epsilon+P and cs2 from T for bulk correction, which isn't how this code was designed... but it can always be fixed. I don't like this because there's always the risk that the wrong EOS information is passed. But there's no way around that without saving a lot of redundant information in the hydro files.
-	if (CONST_with_viscosity) {
-			std::cout << "This part of the code isn't currently working...\n;";
-			exit(1);
-	}
+        // Additional thermodynamic information...
+        const double T_in_GeV=T;
+        // Fit to UrQMD HRG matched to HotQCD lattice results
+        // See MUSIC commit https://github.com/MUSIC-fluid/MUSIC/commit/4ebcd66f98b94c5696387ddd9b04495782f5e0e4
+        // for details on the equation of state
+        const double cs2=(0.3333333*(0.01281408*T_in_GeV - 0.2915388*pow(T_in_GeV,2) + 2.582571*pow(T_in_GeV,3) - 10.48964*pow(T_in_GeV,4) + 16.37394*pow(T_in_GeV,5)))/(0.0001008138 + 0.01153938*T_in_GeV - 0.2763199*pow(T_in_GeV,2) + 2.465881*pow(T_in_GeV,3) - 10.18174*pow(T_in_GeV,4) + 16.36135*pow(T_in_GeV,5));
+        const double epsilon_plus_P_in_GeV_per_fm3 = pow(T_in_GeV,7)*(136.7716 - 2278.343*T_in_GeV + 13710.93*pow(T_in_GeV,2) - 33313.55*pow(T_in_GeV,3) + 42074.83*pow(T_in_GeV,4) - 27236.7*pow(T_in_GeV,5) + 7120.36*pow(T_in_GeV,6))/(0.00326249*T_in_GeV - 0.03467363*pow(T_in_GeV,2) + 0.09305975*pow(T_in_GeV,3) + 0.09236017*pow(T_in_GeV,4) - 0.06847025*pow(T_in_GeV,5));
+        const double epsilon_plus_P_in_one_over_fm4=epsilon_plus_P_in_GeV_per_fm3/CONST_hbarc;
+
+        hydro_info.cs2=cs2;
+        hydro_info.epsilon_plus_P=epsilon_plus_P_in_one_over_fm4;
 
 	//If fscanf couldn't read exactly the right number of elements, it's the end of the file or there's a problem
 	if (elem_read != elem_to_read) {
