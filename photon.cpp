@@ -47,10 +47,10 @@ void photon_prod(const struct photonRate rate_list[]) {
 	double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3] = {0.0};
 
 	// Code under construction...
-	if (CONST_with_viscosity) {
-			std::cout << "Many parts of the code still have to be finished so that viscous corrections can be calculated correctly. Not working now.\n;";
-			exit(1);
-	}
+//	if (CONST_with_viscosity) {
+//			std::cout << "Many parts of the code still have to be finished so that viscous corrections can be calculated correctly. Not working now.\n;";
+//			exit(1);
+//	}
 
         std::cout << "Computing thermal photons...\n";
 
@@ -237,36 +237,41 @@ bool read_hydro_fields_new_format(std::FILE * hydro_fields_files[3], struct hydr
 	hydro_info.uy=uy;
 	hydro_info.tau_ueta=tau_ueta;
 
-	hydro_info.pixx_over_eps_plus_p=pixx_over_eps_plus_p;
-	hydro_info.pixy_over_eps_plus_p=pixy_over_eps_plus_p;
-	hydro_info.tau_pixeta_over_eps_plus_p=tau_pixeta_over_eps_plus_p;
-	hydro_info.piyy_over_eps_plus_p=piyy_over_eps_plus_p;
-	hydro_info.tau_piyeta_over_eps_plus_p=tau_piyeta_over_eps_plus_p;
+        // Only post-process the cells that will actually be used for anything...
+        if (hydro_info.T >= CONST_freezeout_T) {
 
-        const double utau=sqrt(1+ux*ux+uy*uy+tau_ueta*tau_ueta);
+                hydro_info.pixx_over_eps_plus_p=pixx_over_eps_plus_p;
+                hydro_info.pixy_over_eps_plus_p=pixy_over_eps_plus_p;
+                hydro_info.tau_pixeta_over_eps_plus_p=tau_pixeta_over_eps_plus_p;
+                hydro_info.piyy_over_eps_plus_p=piyy_over_eps_plus_p;
+                hydro_info.tau_piyeta_over_eps_plus_p=tau_piyeta_over_eps_plus_p;
 
-        const double pitaux_over_eps_plus_p=(ux*pixx_over_eps_plus_p+uy*pixy_over_eps_plus_p+tau_ueta*tau_pixeta_over_eps_plus_p)/utau;
-        const double pitauy_over_eps_plus_p=(ux*pixy_over_eps_plus_p+uy*piyy_over_eps_plus_p+tau_ueta*tau_piyeta_over_eps_plus_p)/utau;
-        hydro_info.pitaux_over_eps_plus_p=pitaux_over_eps_plus_p;
-        hydro_info.pitauy_over_eps_plus_p=pitauy_over_eps_plus_p;
-        hydro_info.pitautau_over_eps_plus_p=(-pitaux_over_eps_plus_p*utau*ux-pitauy_over_eps_plus_p*utau*uy + tau_ueta*(-ux*tau_pixeta_over_eps_plus_p - uy*tau_piyeta_over_eps_plus_p + tau_ueta*(pixx_over_eps_plus_p + piyy_over_eps_plus_p)))/(tau_ueta*tau_ueta - utau*utau);
-        hydro_info.tau_tau_pietaeta_over_eps_plus_p=-((pitaux_over_eps_plus_p*utau*ux + pitauy_over_eps_plus_p*utau*uy + tau_ueta*(ux*tau_pixeta_over_eps_plus_p + uy*tau_piyeta_over_eps_plus_p) - utau*utau*(pixx_over_eps_plus_p + piyy_over_eps_plus_p))/((tau_ueta - utau)*(tau_ueta + utau)));
-        hydro_info.tau_pitaueta_over_eps_plus_p=-((pitaux_over_eps_plus_p*tau_ueta*ux + pitauy_over_eps_plus_p*tau_ueta*uy + utau*(ux*tau_pixeta_over_eps_plus_p + uy*tau_piyeta_over_eps_plus_p - tau_ueta*(pixx_over_eps_plus_p + piyy_over_eps_plus_p)))/(tau_ueta*tau_ueta - utau*utau));
+                const double utau=sqrt(1+ux*ux+uy*uy+tau_ueta*tau_ueta);
+
+                const double pitaux_over_eps_plus_p=(ux*pixx_over_eps_plus_p+uy*pixy_over_eps_plus_p+tau_ueta*tau_pixeta_over_eps_plus_p)/utau;
+                const double pitauy_over_eps_plus_p=(ux*pixy_over_eps_plus_p+uy*piyy_over_eps_plus_p+tau_ueta*tau_piyeta_over_eps_plus_p)/utau;
+                hydro_info.pitaux_over_eps_plus_p=pitaux_over_eps_plus_p;
+                hydro_info.pitauy_over_eps_plus_p=pitauy_over_eps_plus_p;
+                hydro_info.pitautau_over_eps_plus_p=(-pitaux_over_eps_plus_p*utau*ux-pitauy_over_eps_plus_p*utau*uy + tau_ueta*(-ux*tau_pixeta_over_eps_plus_p - uy*tau_piyeta_over_eps_plus_p + tau_ueta*(pixx_over_eps_plus_p + piyy_over_eps_plus_p)))/(tau_ueta*tau_ueta - utau*utau);
+                hydro_info.tau_tau_pietaeta_over_eps_plus_p=-((pitaux_over_eps_plus_p*utau*ux + pitauy_over_eps_plus_p*utau*uy + tau_ueta*(ux*tau_pixeta_over_eps_plus_p + uy*tau_piyeta_over_eps_plus_p) - utau*utau*(pixx_over_eps_plus_p + piyy_over_eps_plus_p))/((tau_ueta - utau)*(tau_ueta + utau)));
+                hydro_info.tau_pitaueta_over_eps_plus_p=-((pitaux_over_eps_plus_p*tau_ueta*ux + pitauy_over_eps_plus_p*tau_ueta*uy + utau*(ux*tau_pixeta_over_eps_plus_p + uy*tau_piyeta_over_eps_plus_p - tau_ueta*(pixx_over_eps_plus_p + piyy_over_eps_plus_p)))/(tau_ueta*tau_ueta - utau*utau));
 
 
-	hydro_info.Pi_b=Pi_b;
+                hydro_info.Pi_b=Pi_b;
 
-        // Additional thermodynamic information...
-        const double T_in_GeV=T;
-        // Fit to UrQMD HRG matched to HotQCD lattice results
-        // See MUSIC commit https://github.com/MUSIC-fluid/MUSIC/commit/4ebcd66f98b94c5696387ddd9b04495782f5e0e4
-        // for details on the equation of state
-        const double cs2=(0.3333333*(0.01281408*T_in_GeV - 0.2915388*pow(T_in_GeV,2) + 2.582571*pow(T_in_GeV,3) - 10.48964*pow(T_in_GeV,4) + 16.37394*pow(T_in_GeV,5)))/(0.0001008138 + 0.01153938*T_in_GeV - 0.2763199*pow(T_in_GeV,2) + 2.465881*pow(T_in_GeV,3) - 10.18174*pow(T_in_GeV,4) + 16.36135*pow(T_in_GeV,5));
-        const double epsilon_plus_P_in_GeV_per_fm3 = pow(T_in_GeV,7)*(136.7716 - 2278.343*T_in_GeV + 13710.93*pow(T_in_GeV,2) - 33313.55*pow(T_in_GeV,3) + 42074.83*pow(T_in_GeV,4) - 27236.7*pow(T_in_GeV,5) + 7120.36*pow(T_in_GeV,6))/(0.00326249*T_in_GeV - 0.03467363*pow(T_in_GeV,2) + 0.09305975*pow(T_in_GeV,3) + 0.09236017*pow(T_in_GeV,4) - 0.06847025*pow(T_in_GeV,5));
-        const double epsilon_plus_P_in_one_over_fm4=epsilon_plus_P_in_GeV_per_fm3/CONST_hbarc;
+                // Additional thermodynamic information...
+                const double T_in_GeV=T;
+                // Fit to UrQMD HRG matched to HotQCD lattice results
+                // See MUSIC commit https://github.com/MUSIC-fluid/MUSIC/commit/4ebcd66f98b94c5696387ddd9b04495782f5e0e4
+                // for details on the equation of state
+                const double cs2=(0.3333333*(0.01281408*T_in_GeV - 0.2915388*pow(T_in_GeV,2) + 2.582571*pow(T_in_GeV,3) - 10.48964*pow(T_in_GeV,4) + 16.37394*pow(T_in_GeV,5)))/(0.0001008138 + 0.01153938*T_in_GeV - 0.2763199*pow(T_in_GeV,2) + 2.465881*pow(T_in_GeV,3) - 10.18174*pow(T_in_GeV,4) + 16.36135*pow(T_in_GeV,5));
+                const double epsilon_plus_P_in_GeV_per_fm3 = pow(T_in_GeV,7)*(136.7716 - 2278.343*T_in_GeV + 13710.93*pow(T_in_GeV,2) - 33313.55*pow(T_in_GeV,3) + 42074.83*pow(T_in_GeV,4) - 27236.7*pow(T_in_GeV,5) + 7120.36*pow(T_in_GeV,6))/(0.00326249*T_in_GeV - 0.03467363*pow(T_in_GeV,2) + 0.09305975*pow(T_in_GeV,3) + 0.09236017*pow(T_in_GeV,4) - 0.06847025*pow(T_in_GeV,5));
+                const double epsilon_plus_P_in_one_over_fm4=epsilon_plus_P_in_GeV_per_fm3/CONST_hbarc;
 
-        hydro_info.cs2=cs2;
-        hydro_info.epsilon_plus_P=epsilon_plus_P_in_one_over_fm4;
+                hydro_info.cs2=cs2;
+                hydro_info.epsilon_plus_P=epsilon_plus_P_in_one_over_fm4;
+
+        };
 
 	//If fscanf couldn't read exactly the right number of elements, it's the end of the file or there's a problem
 	if (elem_read != elem_to_read) {
@@ -365,71 +370,78 @@ bool read_hydro_fields_old_format(std::FILE * hydro_fields_files[3], struct hydr
 
 	//If fscanf couldn't read exactly the right number of elements, it's the end of the file or there's a problem
 	if (return_value) {
-		
-		//float ux, uy, ueta, tau, volume, eta_s;
-		// Determine tau and then volume
-		const int itau=int((GLOBAL_line_number/(cellNb_x*cellNb_y*cellNb_eta)));
-		const double tau=MUSIC_tau0+CONST_effective_dTau*itau; //get_tau_from_linenumber();
 
-		// For the boost-invariant case, don't include deta in volume for now --- will be added later
-		double volume=CONST_cellsize_X*CONST_cellsize_Y*CONST_effective_dTau*tau;
-		if (!CONST_boost_invariant) volume*=CONST_cellsize_Eta;
-
-//		std::cout << "Tau is" << tau << "\n";
-
-		// For boost-invariant hydro,  eta_s will be integrated over
-		// but we need to know which slice in eta was saved: CONST_eta_s_of_saved_slice
-		double eta_s;
-		if (CONST_boost_invariant) {
-			eta_s=CONST_eta_s_of_saved_slice;
-		}
-		else {
-			// If the hydro fields are not boost-invariant, we don't need to save eta_s,
-			// but we need it in this function
-			const int ieta=int((GLOBAL_line_number % (cellNb_x*cellNb_y*cellNb_eta) )/(cellNb_x*cellNb_y));
-			eta_s=(ieta-cellNb_eta/2);
-		}
-
-		// Get ux, uy, ueta from vx, vy, vz
-		const double ut=1.0/sqrt(1-vx*vx-vy*vy-vz*vz);
-		const double ux=vx*ut;
-		const double uy=vy*ut;
-		const double uz=vz*ut;
-		const double tau_ueta=-sinh(eta_s)*ut+cosh(eta_s)*uz;
-
-
-		hydro_info.V4=volume;
-		hydro_info.eta_s=eta_s;
 		hydro_info.T=T;
-		hydro_info.ux=ux;
-		hydro_info.uy=uy;
-		hydro_info.tau_ueta=tau_ueta;
+		
+                // Only post-process the cells that will actually be used for anything...
+                if (hydro_info.T >= CONST_freezeout_T) {
 
-		// Shear viscosity related
+                        //float ux, uy, ueta, tau, volume, eta_s;
+                        // Determine tau and then volume
+                        const int itau=int((GLOBAL_line_number/(cellNb_x*cellNb_y*cellNb_eta)));
+                        const double tau=MUSIC_tau0+CONST_effective_dTau*itau; //get_tau_from_linenumber();
 
-		const double dtau_dt=cosh(eta_s);
-		const double tau_deta_dt=-1.0*sinh(eta_s);
-		const double dtau_dz=-1.0*sinh(eta_s);
-		const double tau_deta_dz=cosh(eta_s);
+                        // For the boost-invariant case, don't include deta in volume for now --- will be added later
+                        double volume=CONST_cellsize_X*CONST_cellsize_Y*CONST_effective_dTau*tau;
+                        if (!CONST_boost_invariant) volume*=CONST_cellsize_Eta;
 
-		hydro_info.pitautau_over_eps_plus_p  = dtau_dt*dtau_dt*pitt_over_eps_plus_p+2*dtau_dt*dtau_dz*pitz_over_eps_plus_p+dtau_dz*dtau_dz*pizz_over_eps_plus_p;
-		hydro_info.pitaux_over_eps_plus_p    = dtau_dt*pitx_over_eps_plus_p+dtau_dz*pixz_over_eps_plus_p;
-		hydro_info.pitauy_over_eps_plus_p    = dtau_dt*pity_over_eps_plus_p+dtau_dz*piyz_over_eps_plus_p;
-		hydro_info.tau_pitaueta_over_eps_plus_p  = (dtau_dt*tau_deta_dt*pitt_over_eps_plus_p+(dtau_dt*tau_deta_dz+dtau_dz*tau_deta_dt)*pitz_over_eps_plus_p+dtau_dz*tau_deta_dz*pizz_over_eps_plus_p);
-		hydro_info.tau_pixeta_over_eps_plus_p = (tau_deta_dt*pitx_over_eps_plus_p+tau_deta_dz*pixz_over_eps_plus_p);
-		hydro_info.tau_piyeta_over_eps_plus_p = (tau_deta_dt*pity_over_eps_plus_p+tau_deta_dz*piyz_over_eps_plus_p);
-		hydro_info.tau_tau_pietaeta_over_eps_plus_p  = (tau_deta_dt*tau_deta_dt*pitt_over_eps_plus_p+2*tau_deta_dt*tau_deta_dz*pitz_over_eps_plus_p+tau_deta_dz*tau_deta_dz*pizz_over_eps_plus_p);
-		hydro_info.pixx_over_eps_plus_p      = pixx_over_eps_plus_p;
-		hydro_info.pixy_over_eps_plus_p      = pixy_over_eps_plus_p;
-		hydro_info.piyy_over_eps_plus_p      = piyy_over_eps_plus_p;
+                        //std::cout << "Tau is" << tau << "\n";
 
-		// Bulk viscosity plus other information needed
-		hydro_info.Pi_b=bulk_pressure;
-		hydro_info.epsilon_plus_P=eps_plus_P;
-		hydro_info.cs2=cs2;
+                        // For boost-invariant hydro,  eta_s will be integrated over
+                        // but we need to know which slice in eta was saved: CONST_eta_s_of_saved_slice
+                        double eta_s;
+                        if (CONST_boost_invariant) {
+                                eta_s=CONST_eta_s_of_saved_slice;
+                        }
+                        else {
+                                // If the hydro fields are not boost-invariant, we don't need to save eta_s,
+                                // but we need it in this function
+                                const int ieta=int((GLOBAL_line_number % (cellNb_x*cellNb_y*cellNb_eta) )/(cellNb_x*cellNb_y));
+                                eta_s=(ieta-cellNb_eta/2);
+                        }
 
-		// Remember that one line was read
-		GLOBAL_line_number++;
+
+                        // Get ux, uy, ueta from vx, vy, vz
+                        const double ut=1.0/sqrt(1-vx*vx-vy*vy-vz*vz);
+                        const double ux=vx*ut;
+                        const double uy=vy*ut;
+                        const double uz=vz*ut;
+                        const double tau_ueta=-sinh(eta_s)*ut+cosh(eta_s)*uz;
+
+
+                        hydro_info.V4=volume;
+                        hydro_info.eta_s=eta_s;
+                        hydro_info.ux=ux;
+                        hydro_info.uy=uy;
+                        hydro_info.tau_ueta=tau_ueta;
+
+                        // Shear viscosity related
+
+                        const double dtau_dt=cosh(eta_s);
+                        const double tau_deta_dt=-1.0*sinh(eta_s);
+                        const double dtau_dz=-1.0*sinh(eta_s);
+                        const double tau_deta_dz=cosh(eta_s);
+
+                        hydro_info.pitautau_over_eps_plus_p  = dtau_dt*dtau_dt*pitt_over_eps_plus_p+2*dtau_dt*dtau_dz*pitz_over_eps_plus_p+dtau_dz*dtau_dz*pizz_over_eps_plus_p;
+                        hydro_info.pitaux_over_eps_plus_p    = dtau_dt*pitx_over_eps_plus_p+dtau_dz*pixz_over_eps_plus_p;
+                        hydro_info.pitauy_over_eps_plus_p    = dtau_dt*pity_over_eps_plus_p+dtau_dz*piyz_over_eps_plus_p;
+                        hydro_info.tau_pitaueta_over_eps_plus_p  = (dtau_dt*tau_deta_dt*pitt_over_eps_plus_p+(dtau_dt*tau_deta_dz+dtau_dz*tau_deta_dt)*pitz_over_eps_plus_p+dtau_dz*tau_deta_dz*pizz_over_eps_plus_p);
+                        hydro_info.tau_pixeta_over_eps_plus_p = (tau_deta_dt*pitx_over_eps_plus_p+tau_deta_dz*pixz_over_eps_plus_p);
+                        hydro_info.tau_piyeta_over_eps_plus_p = (tau_deta_dt*pity_over_eps_plus_p+tau_deta_dz*piyz_over_eps_plus_p);
+                        hydro_info.tau_tau_pietaeta_over_eps_plus_p  = (tau_deta_dt*tau_deta_dt*pitt_over_eps_plus_p+2*tau_deta_dt*tau_deta_dz*pitz_over_eps_plus_p+tau_deta_dz*tau_deta_dz*pizz_over_eps_plus_p);
+                        hydro_info.pixx_over_eps_plus_p      = pixx_over_eps_plus_p;
+                        hydro_info.pixy_over_eps_plus_p      = pixy_over_eps_plus_p;
+                        hydro_info.piyy_over_eps_plus_p      = piyy_over_eps_plus_p;
+
+                        // Bulk viscosity plus other information needed
+                        hydro_info.Pi_b=bulk_pressure;
+                        hydro_info.epsilon_plus_P=eps_plus_P;
+                        hydro_info.cs2=cs2;
+
+                }
+
+                // Remember that one line was read
+                GLOBAL_line_number++;
 
 	}
 
