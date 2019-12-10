@@ -502,24 +502,17 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
 	const double uy=hydro_info.uy;
 	const double tau_ueta=hydro_info.tau_ueta;
 	const double utau=sqrt(1.+ux*ux+uy*uy+tau_ueta*tau_ueta);
+
+        // Spatial rapidity
+        const double eta_s=hydro_info.eta_s;
+
 	//
-	const double coshEtaS=cosh(hydro_info.eta_s);
-	const double sinhEtaS=sinh(hydro_info.eta_s);
+	//const double coshEtaS=cosh(hydro_info.eta_s);
+	//const double sinhEtaS=sinh(hydro_info.eta_s);
 
-	//const double pitt=visc_info[0];
-	//const double pitx=visc_info[1];
-	//const double pity=visc_info[2];
-	//const double pitz=visc_info[3];
-	//const double pixx=visc_info[4];
-	//const double pixy=visc_info[5];
-	//const double pixz=visc_info[6];
-	//const double piyy=visc_info[7];
-	//const double piyz=visc_info[8];
-	//const double pizz=visc_info[9];
-
-	//const double bulk_pressure=visc_info[10];
-	//const double eps_plus_P=visc_info[11];
-	//const double cs2=visc_info[12];
+	const double bulk_pressure=hydro_info.Pi_b;
+	const double eps_plus_P= hydro_info.epsilon_plus_P;
+	const double cs2= hydro_info.cs2;
 
 	//pre-tabulate for speed
 	double cosPhiArray[CONST_Nphi];
@@ -549,8 +542,8 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
 
 					const double rap=CONST_rapMin+irap*CONST_delRap;	
 
-					const double coshRap=cosh(rap);
-					const double sinhRap=sinh(rap);
+					//const double coshRap=cosh(rap);
+					//const double sinhRap=sinh(rap);
 					//invCoshRap=1.0/coshRap;
 
                                         //const double phi=iphi*CONST_delPhi;	
@@ -560,100 +553,131 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
                                         const double cosPhi=cosPhiArray[iphi];
                                         const double sinPhi=sinPhiArray[iphi];
 
+                                       // (K^tau,K^x,K^y, K^eta) at (tau,x,y,eta_s)=(k_T cosh(y-eta_s), k_T cos(phi), k_T sin(phi), k_T sinh(y-eta_s)/tau) at (tau,x,y,eta_s)
+                                       // K_\mu K_\nu \pi^{\mu\nu} = K_{\mu^\prime} K_{\nu^\prime} \pi^{\mu^\prime \nu^\prime}
+
+
+
 					double kOverTkOverTOver_e_P=0.0;
-					double bulk_pressure=0.0;
-					double eps_plus_P=0.0;
-					double cs2=0.0;
+
+                                        // Compute K_\mu K_\nu \pi^{\mu\nu} before passing for the current position in spatial rapidity and the current photon momentum K
+                                        if (CONST_with_viscosity&&CONST_with_shear_viscosity) {
 
 
-                                        //Evaluate (A_L)_{alpha beta} \hat{k}_L^alpha \alpha{k}_L^beta
-//                                        if (CONST_with_viscosity&&CONST_with_shear_viscosity) {
-//                                                //shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
-//                                                //*shear_info+: 0   1   2   3   4   5   6   7   8   9
-//                                                //K=(kT cosh(y), kT cos(phi), kT sin(phi), kT sinh(y))
-//                                                //\hat{K}=(1,cos(phi)/cosh(rap),sin(phi)/cosh(rap),sinh(rap)/cosh(rap))
-//                                                if (!CONST_boost_invariant) {
-//                                                        //kkPiOverEta=A00 + 1/cosh(rap)*( 2*(A01*k1+A02*k2+A03*k3) + 1/coshrap*() )
-//                                                        //kkPiOverEta=A00 + 1/cosh(rap)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(rap)^2)+2/cosh(rap)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(rap)+1/cosh(rap)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(rap)+A23*sin(phi)*sinh(rap)))
-//                                                        //kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
-//                                                        //kOverTkOverTOver_e_P=kT*kT*coshRap*coshRap*(visc_info[0] + invCoshRap*invCoshRap*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhRap*sinhRap) + 2.0*invCoshRap*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*sinhRap + invCoshRap*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhRap + visc_info[8]*sinPhi*sinhRap)));
-//
-//                                                        const double kt=kT*coshRap;
-//                                                        const double kx=kT*cosPhi;
-//                                                        const double ky=kT*sinPhi;
-//                                                        const double kz=kT*sinhRap;
-//
-//                                                        kOverTkOverTOver_e_P=kt*(kt*pitt-2*kx*pitx-2*ky*pity-2*kz*pitz)+kx*(kx*pixx+2*ky*pixy+2*kz*pixz)+ky*(ky*piyy+2*kz*piyz)+kz*kz*pizz;
-//
-//                                                        kOverTkOverTOver_e_P/=T*T;
-//
-//
-//
-//
-//
-//                                                }
-//                                                //In the boost-invariant case, \Pi^\mu\nu is the value a eta=0
-//                                                //k_\mu k\nu \Pi^\mu\nu must be calculed correctly
-//                                                else {
-//                                                        //K=(kT cosh(y), kT cos(phi), kT sin(phi), kT sinh(y))
-//                                                        //(k^tau,k^x,k^y,k^eta)=(kT cosh(y-eta),k^x,k^y,kT sinh(y-eta)/tau)
-//                                                        //k=kT*cosh(rap)
-//                                                        //shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
-//                                                        //*shear_info+: 0   1   2   3   4   5   6   7   8   9
-//                                                        const double tau=curr_pos_copy.tau;
-//
-//                                                        const double ktau=kT*cosh(rap-curr_pos_copy.eta);
-//                                                        const double kx=kT*cosPhi;
-//                                                        const double ky=kT*sinPhi;
-//                                                        const double keta=kT*sinh(rap-curr_pos_copy.eta)/tau;
-//
-//                                                        const double eta_of_pimunu_slice=0.0;
-//                                                        const double dtau_dt=cosh(eta_of_pimunu_slice);
-//                                                        const double deta_dt=-1.0*sinh(eta_of_pimunu_slice)/tau;
-//                                                        const double dtau_dz=-1.0*sinh(eta_of_pimunu_slice);
-//                                                        const double deta_dz=cosh(eta_of_pimunu_slice)/tau;
-//
-//                                                        const double tau2=tau*tau;
-//
-//                                                        const double pitautau=dtau_dt*dtau_dt*pitt+2*dtau_dt*dtau_dz*pitz+dtau_dz*dtau_dz*pizz;
-//                                                        const double pitaux=dtau_dt*pitx+dtau_dz*pixz;
-//                                                        const double pitauy=dtau_dt*pity+dtau_dz*piyz;
-//                                                        const double pitaueta=dtau_dt*deta_dt*pitt+(dtau_dt*deta_dz+dtau_dz*deta_dt)*pitz+dtau_dz*deta_dz*pizz;
-//                                                        const double pixeta=deta_dt*pitx+deta_dz*pixz;
-//                                                        const double piyeta=deta_dt*pity+deta_dz*piyz;
-//                                                        const double pietaeta=deta_dt*deta_dt*pitt+2*deta_dt*deta_dz*pitz+deta_dz*deta_dz*pizz;
-//
-//                                                        kOverTkOverTOver_e_P=ktau*(ktau*pitautau-2*kx*pitaux-2*ky*pitauy-2*tau2*keta*pitaueta)+kx*(kx*pixx+2*ky*pixy+2*tau2*keta*pixeta)+ky*(ky*piyy+2*tau2*keta*piyeta)+tau2*tau2*keta*keta*pietaeta;
-//
-//                                                        kOverTkOverTOver_e_P/=T*T;
-//
-//                                                }
-//
-//
-//                                                //double tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9]);
-//                                                //if (tr_check > 1e-5) {
-//                                                //	std::cout << "Warning: Large deviation from tracelessness (" << tr_check << ")!\n";
-//                                                //}
-//
-//                                                //Akk=(*shear_info)+invCoshRap( (*shear_info+4)*cosPhi*cosPhi);
-//                                        }
-//                                        else {
-//                                                kOverTkOverTOver_e_P=0.0;
-//                                        }
+                                                const double pitautau_over_eps_plus_p         =	hydro_info.pitautau_over_eps_plus_p;
+                                                const double pitaux_over_eps_plus_p           =	hydro_info.pitaux_over_eps_plus_p;
+                                                const double pitauy_over_eps_plus_p           =	hydro_info.pitauy_over_eps_plus_p;
+                                                const double tau_pitaueta_over_eps_plus_p     =	hydro_info.tau_pitaueta_over_eps_plus_p;
+                                                const double tau_pixeta_over_eps_plus_p       = hydro_info.tau_pixeta_over_eps_plus_p;
+                                                const double tau_piyeta_over_eps_plus_p       = hydro_info.tau_piyeta_over_eps_plus_p;
+                                                const double tau_tau_pietaeta_over_eps_plus_p = hydro_info.tau_tau_pietaeta_over_eps_plus_p;
+                                                const double pixx_over_eps_plus_p             = hydro_info.pixx_over_eps_plus_p;
+                                                const double pixy_over_eps_plus_p             = hydro_info.pixy_over_eps_plus_p;
+                                                const double piyy_over_eps_plus_p             = hydro_info.piyy_over_eps_plus_p;
 
-					
-					//Photon momentum in the lab frame
-					//k=mT cosh(rap)=kT cosh(rap)
-					const double kLt=kT*coshRap;
-					//kx=kT cos(phi)
-					const double kLx=kT*cosPhi;
-					//ky=kT sin(phi)
-					const double kLy=kT*sinPhi;
-					//kz=mT sinh(rap)=kT sinh(rap)
-					const double kLz=kT*sinhRap;
 
-					const double kLtau=kLt*coshEtaS-kLz*sinhEtaS;
-					const double tau_kLeta=-1*kLt*sinhEtaS+kLz*coshEtaS;
+
+                                                if (!CONST_boost_invariant) {
+                                                        //kkPiOverEta=A00 + 1/cosh(rap)*( 2*(A01*k1+A02*k2+A03*k3) + 1/coshrap*() )
+                                                        //kkPiOverEta=A00 + 1/cosh(rap)^2*(A11 cos(phi)^2+A22*sin(phi)^2+A33*sinh(rap)^2)+2/cosh(rap)*(A01*cos(phi)+A02*sin(phi)+A03*sinh(rap)+1/cosh(rap)*(A12*cos(phi)*sin(phi)+A13*cos(phi)*sinh(rap)+A23*sin(phi)*sinh(rap)))
+                                                        //kkPiOverEta=*(shear_info) + invCoshEta*invCoshEta*( *(shear_info+4)*cosPhi*cosPhi + *(shear_info+7)*sinPhi*sinPhi + *(shear_info+9)*sinhEta*sinhEta) + 2.0*invCoshEta*(*(shear_info+1)*cosPhi + *(shear_info+2)*sinPhi + *(shear_info+3)*sinhEta + invCoshEta*( *(shear_info+5)*cosPhi*sinPhi + *(shear_info+6)*cosPhi*sinhEta + *(shear_info+8)*sinPhi*sinhEta));
+                                                        //kOverTkOverTOver_e_P=kT*kT*coshRap*coshRap*(visc_info[0] + invCoshRap*invCoshRap*( visc_info[4]*cosPhi*cosPhi + visc_info[7]*sinPhi*sinPhi + visc_info[9]*sinhRap*sinhRap) + 2.0*invCoshRap*( -1.0*visc_info[1]*cosPhi - visc_info[2]*sinPhi - visc_info[3]*sinhRap + invCoshRap*( visc_info[5]*cosPhi*sinPhi + visc_info[6]*cosPhi*sinhRap + visc_info[8]*sinPhi*sinhRap)));
+
+                                                        //const double kt=kT*coshRap;
+                                                        //const double kx=kT*cosPhi;
+                                                        //const double ky=kT*sinPhi;
+                                                        //const double kz=kT*sinhRap;
+
+                                                        //kOverTkOverTOver_e_P=kt*(kt*pitt-2*kx*pitx-2*ky*pity-2*kz*pitz)+kx*(kx*pixx+2*ky*pixy+2*kz*pixz)+ky*(ky*piyy+2*kz*piyz)+kz*kz*pizz;
+
+                                                        //kOverTkOverTOver_e_P/=T*T;
+                                                        //
+                                                        const double ktau=kT*cosh(rap-eta_s);
+                                                        const double kx=kT*cosPhi;
+                                                        const double ky=kT*sinPhi;
+                                                        const double tau_keta=kT*sinh(rap-eta_s);
+
+                                                        kOverTkOverTOver_e_P=(ktau*ktau*pitautau_over_eps_plus_p+kx*kx*pixx_over_eps_plus_p+2*kx*ky*pixy_over_eps_plus_p+ky*ky*piyy_over_eps_plus_p+2*tau_keta*(kx*tau_pixeta_over_eps_plus_p+ky*tau_piyeta_over_eps_plus_p)+tau_keta*tau_keta*tau_tau_pietaeta_over_eps_plus_p-2*ktau*(kx*pitaux_over_eps_plus_p+ky*pitauy_over_eps_plus_p+tau_keta*tau_pitaueta_over_eps_plus_p))/(T*T);
+
+
+
+
+                                                }
+                                                //In the boost-invariant case, \Pi^\mu\nu is the value a eta=0
+                                                //k_\mu k\nu \Pi^\mu\nu must be calculed correctly
+                                                else {
+
+                                                        const double ktau=kT*cosh(rap-eta_s);
+                                                        const double kx=kT*cosPhi;
+                                                        const double ky=kT*sinPhi;
+                                                        const double tau_keta=kT*sinh(rap-eta_s);
+
+                                                        kOverTkOverTOver_e_P=(ktau*ktau*pitautau_over_eps_plus_p+kx*kx*pixx_over_eps_plus_p+2*kx*ky*pixy_over_eps_plus_p+ky*ky*piyy_over_eps_plus_p+2*tau_keta*(kx*tau_pixeta_over_eps_plus_p+ky*tau_piyeta_over_eps_plus_p)+tau_keta*tau_keta*tau_tau_pietaeta_over_eps_plus_p-2*ktau*(kx*pitaux_over_eps_plus_p+ky*pitauy_over_eps_plus_p+tau_keta*tau_pitaueta_over_eps_plus_p))/(T*T);
+
+
+                                                       // //K=(kT cosh(y), kT cos(phi), kT sin(phi), kT sinh(y))
+                                                       // //(k^tau,k^x,k^y,k^eta)=(kT cosh(y-eta),k^x,k^y,kT sinh(y-eta)/tau)
+                                                       // //k=kT*cosh(rap)
+                                                       // //shear_info: Wtt,Wtx,Wty,Wtz,Wxx,Wxy,Wxz,Wyy,Wyz,Wzz
+                                                       // //*shear_info+: 0   1   2   3   4   5   6   7   8   9
+                                                       // const double tau=curr_pos_copy.tau;
+
+                                                       // const double ktau=kT*cosh(rap-curr_pos_copy.eta);
+                                                       // const double kx=kT*cosPhi;
+                                                       // const double ky=kT*sinPhi;
+                                                       // const double keta=kT*sinh(rap-curr_pos_copy.eta)/tau;
+
+                                                       // const double eta_of_pimunu_slice=0.0;
+                                                       // const double dtau_dt=cosh(eta_of_pimunu_slice);
+                                                       // const double deta_dt=-1.0*sinh(eta_of_pimunu_slice)/tau;
+                                                       // const double dtau_dz=-1.0*sinh(eta_of_pimunu_slice);
+                                                       // const double deta_dz=cosh(eta_of_pimunu_slice)/tau;
+
+                                                       // const double tau2=tau*tau;
+
+                                                       // const double pitautau=dtau_dt*dtau_dt*pitt+2*dtau_dt*dtau_dz*pitz+dtau_dz*dtau_dz*pizz;
+                                                       // const double pitaux=dtau_dt*pitx+dtau_dz*pixz;
+                                                       // const double pitauy=dtau_dt*pity+dtau_dz*piyz;
+                                                       // const double pitaueta=dtau_dt*deta_dt*pitt+(dtau_dt*deta_dz+dtau_dz*deta_dt)*pitz+dtau_dz*deta_dz*pizz;
+                                                       // const double pixeta=deta_dt*pitx+deta_dz*pixz;
+                                                       // const double piyeta=deta_dt*pity+deta_dz*piyz;
+                                                       // const double pietaeta=deta_dt*deta_dt*pitt+2*deta_dt*deta_dz*pitz+deta_dz*deta_dz*pizz;
+
+                                                       // kOverTkOverTOver_e_P=ktau*(ktau*pitautau-2*kx*pitaux-2*ky*pitauy-2*tau2*keta*pitaueta)+kx*(kx*pixx+2*ky*pixy+2*tau2*keta*pixeta)+ky*(ky*piyy+2*tau2*keta*piyeta)+tau2*tau2*keta*keta*pietaeta;
+
+                                                       // kOverTkOverTOver_e_P/=T*T;
+
+                                                }
+
+
+                                                //double tr_check=(visc_info[0]-visc_info[4]-visc_info[7]-visc_info[9]);
+                                                //if (tr_check > 1e-5) {
+                                                //	std::cout << "Warning: Large deviation from tracelessness (" << tr_check << ")!\n";
+                                                //}
+
+                                                //Akk=(*shear_info)+invCoshRap( (*shear_info+4)*cosPhi*cosPhi);
+                                        }
+                                        else {
+                                                kOverTkOverTOver_e_P=0.0;
+                                        }
+
+					// Photon momentum in the lab frame
+                                        const double kLtau=kT*cosh(rap-eta_s);
+                                        const double kLx=kT*cosPhi;
+                                        const double kLy=kT*sinPhi;
+                                        const double tau_kLeta=kT*sinh(rap-eta_s);
+					//
+					////k=mT cosh(rap)=kT cosh(rap)
+					//const double kLt=kT*coshRap;
+					////kx=kT cos(phi)
+					//const double kLx=kT*cosPhi;
+					////ky=kT sin(phi)
+					//const double kLy=kT*sinPhi;
+					////kz=mT sinh(rap)=kT sinh(rap)
+					//const double kLz=kT*sinhRap;
+
+					//const double kLtau=kLt*coshEtaS-kLz*sinhEtaS;
+					//const double tau_kLeta=-1*kLt*sinhEtaS+kLz*coshEtaS;
 
 					//kR.uR=kL.uL
 					//k_rf=(k_L-\vec{u}/u0.\vec{k})/sqrt(1-u^2/u0^2)
