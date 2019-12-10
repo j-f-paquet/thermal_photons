@@ -206,5 +206,6 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
 void fill_grid(int irap, int iphi, int ikT, double kR, double T, double V4, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
 void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]);
+void update_position_info();
 
 #endif

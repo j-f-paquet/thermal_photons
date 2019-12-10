@@ -18,6 +18,12 @@
 
 unsigned long int GLOBAL_line_number=0;
 
+// For backward compatibility
+unsigned long int GLOBAL_ix=1;
+unsigned long int GLOBAL_iy=1;
+unsigned long int GLOBAL_ieta=1;
+unsigned long int GLOBAL_ieta_slice_to_use=2;
+
 //Main
 int main() {
 
@@ -121,11 +127,12 @@ bool init_hydro_field_files(std::FILE * hydro_fields_files[3]) {
 	}
 	else {
 
-                // Format check...
-                if ((CONST_cellsize_Eta > 1)&&(CONST_boost_invariant)) {
-                        std::cout << "2+1D hydro file has multiple slices in spatial rapidity. The code needs to be modified to deal with this...\n";
-                        exit(1);
-                }
+                //// Format check...
+                //if ((CONST_cellsize_Eta > 1)&&(CONST_boost_invariant)) {
+                //        std::cout << "2+1D hydro file has multiple slices in spatial rapidity. The code needs to be modified to deal with this...\n";
+                //        exit(1);
+                //}
+                //std::cout << "Pointers" << &(hydro_fields_files[0]) << " " << &(hydro_fields_files[1]) << " "  << &(hydro_fields_files[2]) << "\n";
 
 		return_value=open_file_read(CONST_binaryMode,stGridFile,&hydro_fields_files[0]);
 		bool shear_return_value=true;
@@ -150,18 +157,65 @@ void close_hydro_field_files(std::FILE * hydro_fields_files[3]) {
 	}
 }
 
+void update_position_info() {
+
+        // This function was written assuming "line" starts at 1
+        int line=GLOBAL_line_number+1;
+
+	//There is (cellNb_x*cellNb_y*cellNb_eta) line per timestep
+	if ((line)%(cellNb_x*cellNb_y*cellNb_eta) == 0) {
+
+		//Update tau	
+		//GLOBAL_itau+=1;
+		GLOBAL_ix=1;
+		GLOBAL_iy=1;
+		GLOBAL_ieta=1;
+
+	}
+	else if ((line)%(cellNb_x*cellNb_y)==0) {
+		GLOBAL_ieta+=1;
+		GLOBAL_ix=1;
+		GLOBAL_iy=1;
+	}
+	else if ((line)%(cellNb_x)==0) {
+		GLOBAL_iy+=1;
+		GLOBAL_ix=1;
+	}
+	else {
+		GLOBAL_ix+=1;
+	}
+
+}
+
 //Read spacetime file 
 bool read_hydro_fields(std::FILE * hydro_fields_files[3], struct hydro_info_t & hydro_info) {
 
 	bool return_value;
 
-	if (CONST_file_format == new_format) {
-		return_value=read_hydro_fields_new_format(hydro_fields_files,hydro_info);
-	}
-	else {
-		return_value=read_hydro_fields_old_format(hydro_fields_files,hydro_info);
-	}
+        do {
 
+//                std::cout << "line=" << GLOBAL_line_number << "\n";
+//                std::cout << GLOBAL_ix << " " << GLOBAL_iy << " " <<  GLOBAL_ieta << "\n";
+
+                if (CONST_file_format == new_format) {
+                        return_value=read_hydro_fields_new_format(hydro_fields_files,hydro_info);
+                }
+                else {
+                        return_value=read_hydro_fields_old_format(hydro_fields_files,hydro_info);
+                }
+
+//                std::cout << "return=" << return_value << "\n";
+
+                // Format check...
+                if ((CONST_cellsize_Eta > 1)&&(CONST_boost_invariant)&&(return_value)) {
+                        // Needs to skip cells in spatial rapidity,
+                        update_position_info();
+                }
+
+        }
+        while ((GLOBAL_ieta_slice_to_use != GLOBAL_ieta)&&(return_value));
+
+        //std::cout << "go for line=" << GLOBAL_line_number << "\n";
 
 	return return_value;
 
