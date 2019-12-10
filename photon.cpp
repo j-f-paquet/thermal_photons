@@ -510,7 +510,7 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
 	//const double coshEtaS=cosh(hydro_info.eta_s);
 	//const double sinhEtaS=sinh(hydro_info.eta_s);
 
-	const double bulk_pressure=hydro_info.Pi_b;
+	double bulk_pressure=hydro_info.Pi_b;
 	const double eps_plus_P= hydro_info.epsilon_plus_P;
 	const double cs2= hydro_info.cs2;
 
@@ -659,6 +659,11 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
                                         }
                                         else {
                                                 kOverTkOverTOver_e_P=0.0;
+                                        }
+
+                                        // Make it possible to turn off bulk viscosity
+                                        if ((!CONST_with_bulk_viscosity)||(!CONST_with_viscosity)) {
+                                                bulk_pressure=0.0;
                                         }
 
 					// Photon momentum in the lab frame
