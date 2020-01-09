@@ -942,8 +942,8 @@ double eval_photon_rate(std::map<enum rate_type, struct photonRate> * rate_list,
                         double ideal_rate=eval_photon_rate(rate_list, currRate->ideal_rate_for_corresponding_production_channel, kOverT, T, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2); 
 
                         // Cap the viscous rate to (viscous_rate_over_ideal_smaller_than*ideal_rate)
-                        if (abs(res)>viscous_rate_over_ideal_smaller_than*abs(ideal_rate)) {
-                                res=(res > 0 ? 1 : -1)*viscous_rate_over_ideal_smaller_than*abs(ideal_rate);
+                        if (fabs(res)>viscous_rate_over_ideal_smaller_than*fabs(ideal_rate)) {
+                                res=(res > 0 ? 1 : -1)*viscous_rate_over_ideal_smaller_than*fabs(ideal_rate);
                         }
 
                 }
