@@ -18,23 +18,27 @@
 
 unsigned long int GLOBAL_line_number=0;
 
+
 //Main
 int main() {
 
 	//
-	struct photonRate rate_list[CONST_N_rates];
+        std::map<enum rate_type, struct photonRate> rate_list;
 
 	//Initialise rates
-	for(int i=0;i<CONST_N_rates;i++) init_rates(&rate_list[i], CONST_rates_to_use[i]);
-
+	for(int i=0;i<CONST_N_rates;i++) {
+                struct photonRate tmp_photon_rate;
+                init_rates(&tmp_photon_rate, CONST_rates_to_use[i]);
+                rate_list[CONST_rates_to_use[i]] = tmp_photon_rate;
+        }
 
 	//Compute photon production
-	photon_prod(rate_list);
+	photon_prod(&rate_list);
 }
 
 
 //Compute photon production
-void photon_prod(const struct photonRate rate_list[]) {
+void photon_prod(std::map<enum rate_type, struct photonRate> * rate_list) {
 
 	//Variables
 	struct hydro_info_t hydro_info;
@@ -449,7 +453,7 @@ bool read_hydro_fields_old_format(std::FILE * hydro_fields_files[3], struct hydr
 
 }
 
-void pre_computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
+void pre_computeDescretizedSpectrum(struct hydro_info_t & hydro_info, std::map<enum rate_type, struct photonRate> * rate_list, double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
         // 3+1D hydro
 	if (!CONST_boost_invariant) {
@@ -491,7 +495,7 @@ void pre_computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const stru
 
 
 /***** Computation of the discretized spectrum *****/
-void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
+void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, std::map<enum rate_type, struct photonRate> * rate_list, double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 	
 	//Assign those to local variables for convenience
 	const double V4=hydro_info.V4;
@@ -523,8 +527,6 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
 
         //Loop over rates
         for(int iRate=0; iRate<CONST_N_rates;iRate++) {
-
-		const struct photonRate current_rate=rate_list[iRate]; 
 
                 //Loop over transverse momentum kT, azimuthal angle phi and rapidity rap
                 //(note that there is no different here between the rapidity and the pseudorapidity, the photon being massless)
@@ -691,7 +693,7 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
 
                                         //Our rate
                                         //dGamma(\vec{k}_L)=dGamma_0(k_rf)+(A_L)_{alpha beta} k_L^alpha k_L^beta Z(rf) 
-                                        fill_grid(irap, iphi, ikT, kR, T, V4, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2, &current_rate,discSpectra[iRate]);	
+                                        fill_grid(irap, iphi, ikT, kR, T, V4, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2, rate_list, CONST_rates_to_use[iRate],discSpectra[iRate]);	
 
                                 }
 
@@ -704,13 +706,13 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, const struct p
 //Discretized spectra: array[times][Nrap][Nphi][Npt][rates]
 //Discretized spectra, version 2: array[times][Nrap][Nphi][Npt][rates][value_and_remainder]
 //stPos=[tau, irap, iphi, ikT]
-void fill_grid(int irap, int iphi, int ikT, double kR, double T, double V4, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2, const struct photonRate * currRate, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
+void fill_grid(int irap, int iphi, int ikT, double kR, double T, double V4, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2, std::map<enum rate_type, struct photonRate> * rate_list, enum rate_type rate_id, double discSpectra[CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
 	//
 	double tmpRate;
 	//double (*local_rate)(double, double, double);
 
-        tmpRate=eval_photon_rate(currRate,kR/T,T,kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2);
+        tmpRate=eval_photon_rate(rate_list, rate_id,kR/T,T,kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2);
 
         //Cell volume: dx*dy*dz*dt=dx*dy*dEta*dTau*tau
         tmpRate*=V4;
@@ -728,14 +730,14 @@ void fill_grid(int irap, int iphi, int ikT, double kR, double T, double V4, doub
 
 }
 
-void compute_observables(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
+void compute_observables(std::map<enum rate_type, struct photonRate> * rate_list, double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
 	compute_midrapidity_yield_and_vn(rate_list, discSpectra);
 
 }
 
 //Output the phi-integrated, rapidity-averaged-around-0 yield as a function of pT
-void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
+void compute_midrapidity_yield_and_vn(std::map<enum rate_type, struct photonRate> * rate_list, double discSpectra[CONST_N_rates][CONST_NkT][CONST_Nrap][CONST_Nphi][3]) {
 
 	double kT, rap, phi, yFac, rap_interval;
 	double yield, vn_sin[CONST_FourierNb], vn_cos[CONST_FourierNb];
@@ -748,7 +750,7 @@ void compute_midrapidity_yield_and_vn(const struct photonRate rate_list[], doubl
 		//Set output file name
 		std::stringstream tmpStr;
 		tmpStr << "vn_";
-		tmpStr << rate_list[rate_no].name.c_str();
+		tmpStr <<  (*rate_list)[CONST_rates_to_use[rate_no]].name.c_str();
 		tmpStr << ".dat";
 
 		//Open output file

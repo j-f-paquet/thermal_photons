@@ -164,6 +164,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			
 			currRate->is_qgp=true;
 			currRate->is_shear_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=qgp_ideal_Dusling;
 
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=true;
@@ -188,6 +189,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			
 			currRate->is_qgp=true;
 			currRate->is_bulk_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=qgp_ideal_Dusling;
 
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=true;
@@ -238,6 +240,8 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			
 			currRate->is_qgp=true;
 			currRate->is_shear_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=qgp_ideal_born_JF_sqrtg;
+                        //currRate->ideal_rate_for_corresponding_production_channel=rate_qgp_ideal_born_AMYfit;
 
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
@@ -306,6 +310,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			
 			currRate->is_qgp=true;
 			currRate->is_shear_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=qgp_ideal_born_AMYfit;
 
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=true;
@@ -333,6 +338,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=true;
 			currRate->rate_fit_function=rate_qgp_viscous_only_born_g2_sqrtg;
+                        currRate->ideal_rate_for_corresponding_production_channel=qgp_ideal_born_AMYfit;
 
 			currRate->use_k_instead_of_kOverT_for_table=true;
 			currRate->number_of_points_in_kOverT=80;
@@ -352,6 +358,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			
 			currRate->is_qgp=true;
 			currRate->is_shear_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=qgp_ideal_born_AMYfit;
 
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
@@ -467,6 +474,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			
 			currRate->is_hg=true;
 			currRate->is_shear_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=hg_ideal_Chun_table_CE;
 
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
@@ -515,6 +523,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			
 			currRate->is_hg=true;
 			currRate->is_shear_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=hg_ideal_Chun_table_PCE165;
 
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
@@ -541,6 +550,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->is_hg=true;
 			currRate->is_shear_viscous=false;
 			currRate->is_bulk_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=hg_ideal_Chun_table_CE;
 
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
@@ -567,6 +577,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			currRate->is_hg=true;
 			currRate->is_shear_viscous=false;
 			currRate->is_bulk_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=hg_ideal_Chun_table_CE;
 
 			currRate->use_table_instead_of_fit=true;
 			currRate->tabulate_fit_for_speed=false;
@@ -765,6 +776,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 			
 			currRate->is_qgp=true;
 			currRate->is_shear_viscous=true;
+                        currRate->ideal_rate_for_corresponding_production_channel=qgp_ideal_born_AMYfit;
 
 			currRate->use_table_instead_of_fit=false;
 			currRate->tabulate_fit_for_speed=false;
@@ -859,14 +871,16 @@ void load_rate_from_file(struct photonRate * currRate) {
 	}
 }
 
-double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2) {
+double eval_photon_rate(std::map<enum rate_type, struct photonRate> * rate_list, enum rate_type rate_id, double kOverT, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2) {
 
 	//void get_photon_rate(int selector, double (**local_rate)(double, double, double));
-	double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk);
+        double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, double T, double kk);
 	double QGP_fraction(double T); 
 
 	//
 	double res=1.0;
+
+        struct photonRate * currRate=&((*rate_list)[rate_id]);
 
 	if (!currRate->is_thermal) {
 	//For speed, check if a QGP fraction is used first
@@ -920,6 +934,19 @@ double eval_photon_rate(const struct photonRate * currRate, double kOverT, doubl
 			res*=(*(currRate->extra_normalisation_factor_function))(kOverT,T,kOverTkOverTOver_e_P);
 		}
 
+
+                // Regulation of viscous corrections
+                if (((currRate->is_shear_viscous)||(currRate->is_bulk_viscous))&&(regulate_negative_rate)) {
+                
+                        // Get the corresponding ideal rate...
+                        double ideal_rate=eval_photon_rate(rate_list, currRate->ideal_rate_for_corresponding_production_channel, kOverT, T, kOverTkOverTOver_e_P, bulk_pressure, eps_plus_P, cs2); 
+
+                        // Cap the viscous rate to (viscous_rate_over_ideal_smaller_than*ideal_rate)
+                        if (abs(res)>viscous_rate_over_ideal_smaller_than*abs(ideal_rate)) {
+                                res=(res > 0 ? 1 : -1)*viscous_rate_over_ideal_smaller_than*abs(ideal_rate);
+                        }
+
+                }
 
 	}
 

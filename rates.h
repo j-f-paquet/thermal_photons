@@ -9,7 +9,14 @@
 const double CONST_pure_QGP_T=0.1801;	
 const double CONST_pure_HG_T=0.1799;	
 
+// ######################################################
+// ### Decide how to handle large viscous corrections ###
+// ######################################################
 
+// Decide whether to regulate cases where 
+// (viscous correction to photon rate)/(ideal photon rate) > viscous_rate_over_ideal_smaller_than
+const bool regulate_negative_rate=true; 
+const double viscous_rate_over_ideal_smaller_than=1.0;
 
 
 // ##############################
@@ -59,7 +66,6 @@ enum rate_type {
 
 
 
-
 // ###########################################
 // ### struct used to define a photon rate ###
 // ##########################################
@@ -93,6 +99,9 @@ struct photonRate {
 
 	bool is_shear_viscous; //Multiply rate by K_mu K_nu Pi^\mu\mu/k^2
 	bool is_bulk_viscous; //Multiply rate by the bulk pressure
+        // If this is a viscous rate, specify the ideal rate for the corresponding production channels
+        // so that one can verify if the rate goes negative in certain parts of the fluid (which is unphysical, of course)
+        enum rate_type ideal_rate_for_corresponding_production_channel;
 
 	//Parameters used to specifiy either the table is...
 	bool use_k_instead_of_kOverT_for_table;
@@ -117,13 +126,12 @@ struct photonRate {
 
 };
 
-
 // ###########################
 // ### Forward declaration ###
 // ###########################
 
 void init_rates(struct photonRate * currRate, enum rate_type id);
-double eval_photon_rate(const struct photonRate * currRate, double kOverT, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2);
+double eval_photon_rate(std::map<enum rate_type, struct photonRate> * rate_list, enum rate_type rate_id, double kOverT, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2);
 
 // Rate functions
 double rate_thermal_ideal(double,double,double);
