@@ -2,9 +2,12 @@
 #include "rates.h"
 
 /***** Rates *****/
-void init_rates(struct photonRate * currRate, enum rate_type id) {
+void init_rates(std::map<enum rate_type, struct photonRate> * rate_list, enum rate_type rate_id) {
 
-	switch(id) {
+        struct photonRate tmp_rate;
+        struct photonRate * currRate=&tmp_rate;
+
+	switch(rate_id) {
 
 		case thermal_ideal:
 			
@@ -785,7 +788,7 @@ void init_rates(struct photonRate * currRate, enum rate_type id) {
 
 	}
 
-
+        (*rate_list)[rate_id] = tmp_rate;
 
 }
 
@@ -1082,6 +1085,26 @@ double get_photon_rate_accel(const struct photonRate * currRate, double kOverT, 
 //
 //}
 
+void validate_rates(std::map<enum rate_type, struct photonRate> * rate_list) {
+
+        // Loop over all the rate objects
+        for(std::map<enum rate_type, struct photonRate>::iterator it = rate_list->begin(); it != rate_list->end(); it++ ) {
+
+                // Get one rate object
+                struct photonRate currRate=it->second;
+
+                // Only if the rate is viscous and regulation is on...
+                if (((currRate.is_shear_viscous)||(currRate.is_bulk_viscous))&&(regulate_negative_rate)) {
+                        enum rate_type ideal_rate_id=currRate.ideal_rate_for_corresponding_production_channel;
+                        // Check if the corresponding ideal rate is initialized...
+                        if (rate_list->count(ideal_rate_id)==0) {
+                                // If not, initialize it
+                                init_rates(rate_list, ideal_rate_id);
+                        }
+                }
+        }
+
+}
 
 
 double QGP_fraction(double T) {

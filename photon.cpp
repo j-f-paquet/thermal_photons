@@ -27,10 +27,9 @@ int main() {
 
 	//Initialise rates
 	for(int i=0;i<CONST_N_rates;i++) {
-                struct photonRate tmp_photon_rate;
-                init_rates(&tmp_photon_rate, CONST_rates_to_use[i]);
-                rate_list[CONST_rates_to_use[i]] = tmp_photon_rate;
+                init_rates(&rate_list,CONST_rates_to_use[i]);
         }
+        validate_rates(&rate_list);
 
 	//Compute photon production
 	photon_prod(&rate_list);

@@ -130,7 +130,8 @@ struct photonRate {
 // ### Forward declaration ###
 // ###########################
 
-void init_rates(struct photonRate * currRate, enum rate_type id);
+void init_rates(std::map<enum rate_type, struct photonRate> * rate_list, enum rate_type rate_id);
+void validate_rates(std::map<enum rate_type, struct photonRate> * rate_list);
 double eval_photon_rate(std::map<enum rate_type, struct photonRate> * rate_list, enum rate_type rate_id, double kOverT, double T, double kOverTkOverTOver_e_P, double bulk_pressure, double eps_plus_P, double cs2);
 
 // Rate functions
