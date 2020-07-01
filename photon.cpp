@@ -382,7 +382,7 @@ bool read_hydro_fields_old_format(std::FILE * hydro_fields_files[3], struct hydr
                         //float ux, uy, ueta, tau, volume, eta_s;
                         // Determine tau and then volume
                         const int itau=int((GLOBAL_line_number/(cellNb_x*cellNb_y*cellNb_eta)));
-                        const double tau=MUSIC_tau0+CONST_effective_dTau*itau; //get_tau_from_linenumber();
+                        const double tau=CONST_tau0+CONST_effective_dTau*itau; //get_tau_from_linenumber();
 
                         // For the boost-invariant case, don't include deta in volume for now --- will be added later
                         double volume=CONST_cellsize_X*CONST_cellsize_Y*CONST_effective_dTau*tau;
