@@ -39,7 +39,7 @@ const std::string bulkViscosityFile="evolution_bulk_pressure_xyeta.dat";
 // Viscous or not? (that is, should we read the files with the shear tensor and the bulk pressure)
 const bool CONST_with_shear_viscosity=MUSIC_with_shear_viscosity; //turn on and off shear viscosity
 const bool CONST_with_bulk_viscosity=MUSIC_with_bulk_viscosity; //turn on and off bulk viscosity
-const bool CONST_with_viscosity=CONST_with_shear_viscosity&&CONST_with_bulk_viscosity; //general flag for viscosity
+const bool CONST_with_viscosity=CONST_with_shear_viscosity||CONST_with_bulk_viscosity; //general flag for viscosity
 
 
 // Information about the spacetime grid, used only for the old evolution file format
