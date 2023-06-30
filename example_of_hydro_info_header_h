@@ -1,0 +1,13 @@
+const int MUSIC_real_nx = 3;
+const int MUSIC_real_ny = 3;
+const int MUSIC_real_neta = 1;
+const double MUSIC_tau0 = 0.4;
+const double MUSIC_dx = 10;
+const double MUSIC_dy = 10;
+const double MUSIC_deta = 1;
+const double MUSIC_dtau = 0.01;
+const bool MUSIC_with_shear_viscosity = 0;
+const bool MUSIC_with_bulk_viscosity = 0;
+const bool MUSIC_with_rhob = 0;
+const bool MUSIC_with_diffusion = 0;
+const bool MUSIC_outputBinaryEvolution=0;
