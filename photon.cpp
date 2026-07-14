@@ -243,21 +243,23 @@ bool read_hydro_fields_new_format(std::FILE * hydro_fields_files[3], struct hydr
         // Only post-process the cells that will actually be used for anything...
         if (hydro_info.T >= CONST_freezeout_T) {
 
-                hydro_info.pixx_over_eps_plus_p=pixx_over_eps_plus_p;
-                hydro_info.pixy_over_eps_plus_p=pixy_over_eps_plus_p;
-                hydro_info.tau_pixeta_over_eps_plus_p=tau_pixeta_over_eps_plus_p;
-                hydro_info.piyy_over_eps_plus_p=piyy_over_eps_plus_p;
-                hydro_info.tau_piyeta_over_eps_plus_p=tau_piyeta_over_eps_plus_p;
+		if (CONST_with_shear_viscosity) {
+                        hydro_info.pixx_over_eps_plus_p=pixx_over_eps_plus_p;
+                        hydro_info.pixy_over_eps_plus_p=pixy_over_eps_plus_p;
+                        hydro_info.tau_pixeta_over_eps_plus_p=tau_pixeta_over_eps_plus_p;
+                        hydro_info.piyy_over_eps_plus_p=piyy_over_eps_plus_p;
+                        hydro_info.tau_piyeta_over_eps_plus_p=tau_piyeta_over_eps_plus_p;
 
-                const double utau=sqrt(1+ux*ux+uy*uy+tau_ueta*tau_ueta);
+                        const double utau=sqrt(1+ux*ux+uy*uy+tau_ueta*tau_ueta);
 
-                const double pitaux_over_eps_plus_p=(ux*pixx_over_eps_plus_p+uy*pixy_over_eps_plus_p+tau_ueta*tau_pixeta_over_eps_plus_p)/utau;
-                const double pitauy_over_eps_plus_p=(ux*pixy_over_eps_plus_p+uy*piyy_over_eps_plus_p+tau_ueta*tau_piyeta_over_eps_plus_p)/utau;
-                hydro_info.pitaux_over_eps_plus_p=pitaux_over_eps_plus_p;
-                hydro_info.pitauy_over_eps_plus_p=pitauy_over_eps_plus_p;
-                hydro_info.pitautau_over_eps_plus_p=(-pitaux_over_eps_plus_p*utau*ux-pitauy_over_eps_plus_p*utau*uy + tau_ueta*(-ux*tau_pixeta_over_eps_plus_p - uy*tau_piyeta_over_eps_plus_p + tau_ueta*(pixx_over_eps_plus_p + piyy_over_eps_plus_p)))/(tau_ueta*tau_ueta - utau*utau);
-                hydro_info.tau_tau_pietaeta_over_eps_plus_p=-((pitaux_over_eps_plus_p*utau*ux + pitauy_over_eps_plus_p*utau*uy + tau_ueta*(ux*tau_pixeta_over_eps_plus_p + uy*tau_piyeta_over_eps_plus_p) - utau*utau*(pixx_over_eps_plus_p + piyy_over_eps_plus_p))/((tau_ueta - utau)*(tau_ueta + utau)));
-                hydro_info.tau_pitaueta_over_eps_plus_p=-((pitaux_over_eps_plus_p*tau_ueta*ux + pitauy_over_eps_plus_p*tau_ueta*uy + utau*(ux*tau_pixeta_over_eps_plus_p + uy*tau_piyeta_over_eps_plus_p - tau_ueta*(pixx_over_eps_plus_p + piyy_over_eps_plus_p)))/(tau_ueta*tau_ueta - utau*utau));
+                        const double pitaux_over_eps_plus_p=(ux*pixx_over_eps_plus_p+uy*pixy_over_eps_plus_p+tau_ueta*tau_pixeta_over_eps_plus_p)/utau;
+                        const double pitauy_over_eps_plus_p=(ux*pixy_over_eps_plus_p+uy*piyy_over_eps_plus_p+tau_ueta*tau_piyeta_over_eps_plus_p)/utau;
+                        hydro_info.pitaux_over_eps_plus_p=pitaux_over_eps_plus_p;
+                        hydro_info.pitauy_over_eps_plus_p=pitauy_over_eps_plus_p;
+                        hydro_info.pitautau_over_eps_plus_p=(-pitaux_over_eps_plus_p*utau*ux-pitauy_over_eps_plus_p*utau*uy + tau_ueta*(-ux*tau_pixeta_over_eps_plus_p - uy*tau_piyeta_over_eps_plus_p + tau_ueta*(pixx_over_eps_plus_p + piyy_over_eps_plus_p)))/(tau_ueta*tau_ueta - utau*utau);
+                        hydro_info.tau_tau_pietaeta_over_eps_plus_p=-((pitaux_over_eps_plus_p*utau*ux + pitauy_over_eps_plus_p*utau*uy + tau_ueta*(ux*tau_pixeta_over_eps_plus_p + uy*tau_piyeta_over_eps_plus_p) - utau*utau*(pixx_over_eps_plus_p + piyy_over_eps_plus_p))/((tau_ueta - utau)*(tau_ueta + utau)));
+                        hydro_info.tau_pitaueta_over_eps_plus_p=-((pitaux_over_eps_plus_p*tau_ueta*ux + pitauy_over_eps_plus_p*tau_ueta*uy + utau*(ux*tau_pixeta_over_eps_plus_p + uy*tau_piyeta_over_eps_plus_p - tau_ueta*(pixx_over_eps_plus_p + piyy_over_eps_plus_p)))/(tau_ueta*tau_ueta - utau*utau));
+                }
 
 
                 hydro_info.Pi_b=Pi_b;
@@ -419,22 +421,23 @@ bool read_hydro_fields_old_format(std::FILE * hydro_fields_files[3], struct hydr
                         hydro_info.tau_ueta=tau_ueta;
 
                         // Shear viscosity related
+			if (CONST_with_shear_viscosity) {
+                                const double dtau_dt=cosh(eta_s);
+                                const double tau_deta_dt=-1.0*sinh(eta_s);
+                                const double dtau_dz=-1.0*sinh(eta_s);
+                                const double tau_deta_dz=cosh(eta_s);
 
-                        const double dtau_dt=cosh(eta_s);
-                        const double tau_deta_dt=-1.0*sinh(eta_s);
-                        const double dtau_dz=-1.0*sinh(eta_s);
-                        const double tau_deta_dz=cosh(eta_s);
-
-                        hydro_info.pitautau_over_eps_plus_p  = dtau_dt*dtau_dt*pitt_over_eps_plus_p+2*dtau_dt*dtau_dz*pitz_over_eps_plus_p+dtau_dz*dtau_dz*pizz_over_eps_plus_p;
-                        hydro_info.pitaux_over_eps_plus_p    = dtau_dt*pitx_over_eps_plus_p+dtau_dz*pixz_over_eps_plus_p;
-                        hydro_info.pitauy_over_eps_plus_p    = dtau_dt*pity_over_eps_plus_p+dtau_dz*piyz_over_eps_plus_p;
-                        hydro_info.tau_pitaueta_over_eps_plus_p  = (dtau_dt*tau_deta_dt*pitt_over_eps_plus_p+(dtau_dt*tau_deta_dz+dtau_dz*tau_deta_dt)*pitz_over_eps_plus_p+dtau_dz*tau_deta_dz*pizz_over_eps_plus_p);
-                        hydro_info.tau_pixeta_over_eps_plus_p = (tau_deta_dt*pitx_over_eps_plus_p+tau_deta_dz*pixz_over_eps_plus_p);
-                        hydro_info.tau_piyeta_over_eps_plus_p = (tau_deta_dt*pity_over_eps_plus_p+tau_deta_dz*piyz_over_eps_plus_p);
-                        hydro_info.tau_tau_pietaeta_over_eps_plus_p  = (tau_deta_dt*tau_deta_dt*pitt_over_eps_plus_p+2*tau_deta_dt*tau_deta_dz*pitz_over_eps_plus_p+tau_deta_dz*tau_deta_dz*pizz_over_eps_plus_p);
-                        hydro_info.pixx_over_eps_plus_p      = pixx_over_eps_plus_p;
-                        hydro_info.pixy_over_eps_plus_p      = pixy_over_eps_plus_p;
-                        hydro_info.piyy_over_eps_plus_p      = piyy_over_eps_plus_p;
+                                hydro_info.pitautau_over_eps_plus_p  = dtau_dt*dtau_dt*pitt_over_eps_plus_p+2*dtau_dt*dtau_dz*pitz_over_eps_plus_p+dtau_dz*dtau_dz*pizz_over_eps_plus_p;
+                                hydro_info.pitaux_over_eps_plus_p    = dtau_dt*pitx_over_eps_plus_p+dtau_dz*pixz_over_eps_plus_p;
+                                hydro_info.pitauy_over_eps_plus_p    = dtau_dt*pity_over_eps_plus_p+dtau_dz*piyz_over_eps_plus_p;
+                                hydro_info.tau_pitaueta_over_eps_plus_p  = (dtau_dt*tau_deta_dt*pitt_over_eps_plus_p+(dtau_dt*tau_deta_dz+dtau_dz*tau_deta_dt)*pitz_over_eps_plus_p+dtau_dz*tau_deta_dz*pizz_over_eps_plus_p);
+                                hydro_info.tau_pixeta_over_eps_plus_p = (tau_deta_dt*pitx_over_eps_plus_p+tau_deta_dz*pixz_over_eps_plus_p);
+                                hydro_info.tau_piyeta_over_eps_plus_p = (tau_deta_dt*pity_over_eps_plus_p+tau_deta_dz*piyz_over_eps_plus_p);
+                                hydro_info.tau_tau_pietaeta_over_eps_plus_p  = (tau_deta_dt*tau_deta_dt*pitt_over_eps_plus_p+2*tau_deta_dt*tau_deta_dz*pitz_over_eps_plus_p+tau_deta_dz*tau_deta_dz*pizz_over_eps_plus_p);
+                                hydro_info.pixx_over_eps_plus_p      = pixx_over_eps_plus_p;
+                                hydro_info.pixy_over_eps_plus_p      = pixy_over_eps_plus_p;
+                                hydro_info.piyy_over_eps_plus_p      = piyy_over_eps_plus_p;
+                        }
 
                         // Bulk viscosity plus other information needed
                         hydro_info.Pi_b=bulk_pressure;
