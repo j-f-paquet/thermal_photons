@@ -517,12 +517,32 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, std::map<enum 
 	const double eps_plus_P= hydro_info.epsilon_plus_P;
 	const double cs2= hydro_info.cs2;
 
-	//pre-tabulate for speed
-	double cosPhiArray[CONST_Nphi];
-	for(int i=0; i<CONST_Nphi;i++) cosPhiArray[i]=cos(i*CONST_delPhi);
+	////pre-tabulate for speed
+	//double cosPhiArray[CONST_Nphi];
+	//for(int i=0; i<CONST_Nphi;i++) cosPhiArray[i]=cos(i*CONST_delPhi);
 
-	double sinPhiArray[CONST_Nphi];
-	for(int i=0; i<CONST_Nphi;i++) sinPhiArray[i]=sin(i*CONST_delPhi);
+	//double sinPhiArray[CONST_Nphi];
+	//for(int i=0; i<CONST_Nphi;i++) sinPhiArray[i]=sin(i*CONST_delPhi);
+	static const std::array<double, CONST_Nphi> cosPhiArray = [] {
+		std::array<double, CONST_Nphi> values{};
+		for (int i=0; i<CONST_Nphi; i++) values[i]=cos(i*CONST_delPhi);
+		return values;
+	}();
+	static const std::array<double, CONST_Nphi> sinPhiArray = [] {
+		std::array<double, CONST_Nphi> values{};
+		for (int i=0; i<CONST_Nphi; i++) values[i]=sin(i*CONST_delPhi);
+		return values;
+	}();
+
+	// eta_s changes between calls, but rapidity does not change inside the
+	// momentum loops.  Evaluate these expensive functions once per rapidity.
+	double coshRapMinusEtaArray[CONST_Nrap];
+	double sinhRapMinusEtaArray[CONST_Nrap];
+	for (int irap=0; irap<CONST_Nrap; irap++) {
+		const double rap=CONST_rapMin+irap*CONST_delRap;
+		coshRapMinusEtaArray[irap]=cosh(rap-eta_s);
+		sinhRapMinusEtaArray[irap]=sinh(rap-eta_s);
+	}
 
         //Loop over rates
         for(int iRate=0; iRate<CONST_N_rates;iRate++) {
@@ -540,8 +560,6 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, std::map<enum 
                                 for(int iphi=0;iphi<CONST_Nphi; iphi++) {
 
 					const double kT=CONST_kTMin+ikT*CONST_delKt;	
-
-					const double rap=CONST_rapMin+irap*CONST_delRap;	
 
 					//const double coshRap=cosh(rap);
 					//const double sinhRap=sinh(rap);
@@ -593,10 +611,10 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, std::map<enum 
 
                                                         //kOverTkOverTOver_e_P/=T*T;
                                                         //
-                                                        const double ktau=kT*cosh(rap-eta_s);
+                                                        const double ktau=kT*coshRapMinusEtaArray[irap];
                                                         const double kx=kT*cosPhi;
                                                         const double ky=kT*sinPhi;
-                                                        const double tau_keta=kT*sinh(rap-eta_s);
+                                                        const double tau_keta=kT*sinhRapMinusEtaArray[irap];
 
                                                         kOverTkOverTOver_e_P=(ktau*ktau*pitautau_over_eps_plus_p+kx*kx*pixx_over_eps_plus_p+2*kx*ky*pixy_over_eps_plus_p+ky*ky*piyy_over_eps_plus_p+2*tau_keta*(kx*tau_pixeta_over_eps_plus_p+ky*tau_piyeta_over_eps_plus_p)+tau_keta*tau_keta*tau_tau_pietaeta_over_eps_plus_p-2*ktau*(kx*pitaux_over_eps_plus_p+ky*pitauy_over_eps_plus_p+tau_keta*tau_pitaueta_over_eps_plus_p))/(T*T);
 
@@ -608,10 +626,10 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, std::map<enum 
                                                 //k_\mu k\nu \Pi^\mu\nu must be calculed correctly
                                                 else {
 
-                                                        const double ktau=kT*cosh(rap-eta_s);
+                                                        const double ktau=kT*coshRapMinusEtaArray[irap];
                                                         const double kx=kT*cosPhi;
                                                         const double ky=kT*sinPhi;
-                                                        const double tau_keta=kT*sinh(rap-eta_s);
+                                                        const double tau_keta=kT*sinhRapMinusEtaArray[irap];
 
                                                         kOverTkOverTOver_e_P=(ktau*ktau*pitautau_over_eps_plus_p+kx*kx*pixx_over_eps_plus_p+2*kx*ky*pixy_over_eps_plus_p+ky*ky*piyy_over_eps_plus_p+2*tau_keta*(kx*tau_pixeta_over_eps_plus_p+ky*tau_piyeta_over_eps_plus_p)+tau_keta*tau_keta*tau_tau_pietaeta_over_eps_plus_p-2*ktau*(kx*pitaux_over_eps_plus_p+ky*pitauy_over_eps_plus_p+tau_keta*tau_pitaueta_over_eps_plus_p))/(T*T);
 
@@ -668,10 +686,10 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, std::map<enum 
                                         }
 
 					// Photon momentum in the lab frame
-                                        const double kLtau=kT*cosh(rap-eta_s);
+                                        const double kLtau=kT*coshRapMinusEtaArray[irap];
                                         const double kLx=kT*cosPhi;
                                         const double kLy=kT*sinPhi;
-                                        const double tau_kLeta=kT*sinh(rap-eta_s);
+                                        const double tau_kLeta=kT*sinhRapMinusEtaArray[irap];
 					//
 					////k=mT cosh(rap)=kT cosh(rap)
 					//const double kLt=kT*coshRap;
