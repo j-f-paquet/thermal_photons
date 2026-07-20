@@ -60,15 +60,20 @@ void photon_prod(std::map<enum rate_type, struct photonRate> * rate_list) {
 	// Loop over file containing hydro fields
 	init_hydro_field_files(hydro_fields_files);
 	read_T_flag=read_hydro_fields(hydro_fields_files, hydro_info);
+	#pragma omp parallel
+	#pragma omp single
+	{
 	while (read_T_flag) {
 
 		if (hydro_info.T >= CONST_freezeout_T) {
+			#pragma omp task firstprivate(hydro_info)
 			pre_computeDescretizedSpectrum(hydro_info, rate_list, discSpectra);
 		}
 
 		//Try to read the next line
 		read_T_flag=read_hydro_fields(hydro_fields_files, hydro_info);
 
+	}
 	}
 	//if ((!std::feof(stFile))||((CONST_with_viscosity)&&(!std::feof(shearViscFile)))) {
 	//	std::cout << "!!!!!!!!!!!!!!! Warning !!!!!!!!!!!!!!!!!! Stopped reading the evolution files before the end of the file!\n";	
@@ -553,7 +558,6 @@ void computeDescretizedSpectrum(struct hydro_info_t & hydro_info, std::map<enum 
                 //Loop over transverse momentum kT, azimuthal angle phi and rapidity rap
                 //(note that there is no different here between the rapidity and the pseudorapidity, the photon being massless)
                 //Loop over kT
-		#pragma omp parallel for collapse(3) shared(discSpectra)
                 for(int ikT=0;ikT<CONST_NkT; ikT++) {
 
                         //Loop over rapidity rap
@@ -738,13 +742,14 @@ void fill_grid(int irap, int iphi, int ikT, double kR, double T, double V4, doub
         tmpRate*=V4;
 
         //Fill value
+		#pragma omp atomic update
         discSpectra[ikT][irap][iphi][1]+=tmpRate;
 
         //Fill lower bound uncertainty
-        discSpectra[ikT][irap][iphi][0]=0.0;
+        //discSpectra[ikT][irap][iphi][0]=0.0;
 
         //Fill upper bound uncertainty
-        discSpectra[ikT][irap][iphi][2]=0.0;
+        //discSpectra[ikT][irap][iphi][2]=0.0;
 
 
 
